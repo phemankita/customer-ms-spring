@@ -60,9 +60,7 @@ public class OAuth2ResourceServerConfig extends ResourceServerConfigurerAdapter 
 		final JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
 	   
 		/* for HS256, set the signing key */
-        System.out.println("SECURITYCONFIG " + securityConfig.getSharedSecret());
-        //converter.setSigningKey(securityConfig.getSharedSecret());
-        converter.setSigningKey("E6526VJkKYhyTFRFMC0pTECpHcZ7TGcq8pKsVVgz9KtESVpheEO284qKzfzg8HpWNBPeHOxNGlyudUHi6i8tFQJXC8PiI48RUpMh23vPDLGD35pCM0417gf58z5xlmRNii56fwRCmIhhV7hDsm3KO2jRv4EBVz7HrYbzFeqI45CaStkMYNipzSm2duuer7zRdMjEKIdqsby0JfpQpykHmC5L6hxkX0BT7XWqztTr6xHCwqst26O0g8r7bXSYjp4a");
+        converter.setSigningKey(securityConfig.getSharedSecret());
 		return converter;
 	}
      
