@@ -332,12 +332,12 @@ Once CouchDB is ready, we can run the Spring Boot Customer application locally a
 
 2. Build the application:
 ```bash
-./gradlew build
+./gradlew build -x test
 ```
 
 3. Run the application on localhost:
 ```bash
-java -jar build/libs/customer-ms-spring.jar
+java -jar build/libs/micro-customer-0.0.1.jar
 ```
 
 4. Validate. You should get a list of all customer items:

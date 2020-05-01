@@ -1,0 +1,98 @@
+buildscript {
+    ext {
+        springBootVersion = '2.2.6.BUILD-SNAPSHOT'
+    }
+    repositories {
+        mavenCentral()
+        maven {
+            url "http://repo.spring.io/release"
+        }
+    }
+    dependencies {
+        classpath "io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE"
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.2.6.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+
+}
+plugins {
+    id "org.springframework.boot" version "2.2.6.RELEASE"
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'java'
+}
+
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+ext {
+   // set('springCloudVersion', "Greenwich.RELEASE")
+    set('springCloudVersion', "Hoxton.SR4")
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+//apply plugin: 'spring-boot'
+
+jar {
+    baseName = 'micro-customer'
+    version =  '0.0.1'
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencyManagement {
+     imports {
+         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+     }
+}
+
+dependencies {
+    compile group: 'com.cloudant', name:'cloudant-client', version: '2.7.0'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'com.okta.spring:okta-spring-boot-starter:1.4.0'
+    compile "org.springframework.boot:spring-boot-starter-security"
+    implementation 'org.springframework.cloud:spring-cloud-starter-oauth2'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-hystrix'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+dependencyManagement {
+    imports {
+        //mavenBom 'org.springframework.cloud:spring-cloud-starter-parent:Angel.SR4'
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+test {
+    useJUnit()
+    testLogging {
+        events 'started', 'passed'
+        showStandardStreams = true
+    }
+}
+
+//task wrapper(type: Wrapper) {
+//    gradleVersion = '2.3'
+//}

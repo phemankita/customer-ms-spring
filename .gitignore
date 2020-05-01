@@ -1,28 +1,51 @@
-/target/*
-.appsody-spring-trigger
+*.class
 
-### STS ###
-.apt_generated
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Don't ignore gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+build
+.gradle
+/bin/
+
+# Eclipse
 .classpath
-.factorypath
 .project
-.settings
-.springBeans
-.sts4-cache
+.settings/
+.factorypath
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# Intellij
+.idea/
+out/
 *.iml
-*.ipr
+*.iws
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-/build/
+# swp, bak, tgz, log files
+*.swp
+*.bak
+*.tgz
+*.log
 
-### VS Code ###
-.vscode/
+# Mac
+.DS_Store
+
+# Maven
+log/
+target/
+
+# Chart related files
+chart/customer/charts
+chart/customer/requirements.lock
+
+# Ignore test YAML files
+*.yaml.test
