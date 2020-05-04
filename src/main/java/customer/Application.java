@@ -10,6 +10,6 @@ public class Application {
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
-        //System.out.println("Customer microservice is ready for business...");
+        System.out.println("Customer microservice is ready for business...");
     }
 }

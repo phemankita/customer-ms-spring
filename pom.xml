@@ -45,11 +45,7 @@
       <artifactId>cloudant-spring-framework</artifactId>
       <version>0.0.4</version>
     </dependency>
-    <dependency>
-      <groupId>com.cloudant</groupId>
-      <artifactId>cloudant-spring-boot-starter</artifactId>
-      <version>0.0.4</version>
-    </dependency>
+
     <dependency>
         <groupId>org.springframework.security</groupId>
         <artifactId>spring-security-config</artifactId>
@@ -77,10 +73,6 @@
       <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.okta.spring</groupId>
       <artifactId>okta-spring-boot-starter</artifactId>
       <version>1.2.1</version>
@@ -94,6 +86,11 @@
       <artifactId>spring-boot-devtools</artifactId>
       <scope>runtime</scope>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-jwt</artifactId>
+      <version>1.1.0.RELEASE</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>

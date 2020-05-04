@@ -19,6 +19,7 @@ public class CloudantPropertiesBean {
 	}
 
 	public String getProtocol() {
+		System.out.println("GETPROTOCOL ");
 		return protocol;
 	}
 

@@ -20,7 +20,7 @@ spring:
       protocol: http
       username: admin
       password: passw0rd
-      host: 127.0.0.1
+      host: host.docker.internal
       port: 5985
       database: customers
 

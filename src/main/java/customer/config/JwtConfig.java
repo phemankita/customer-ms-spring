@@ -13,10 +13,12 @@ public class JwtConfig {
 	private String sharedSecret;
 	
 	public String getSharedSecret() {
+		System.out.println("SHAREDSECRET ");
 		return sharedSecret;
 	}
 	
 	public void setSharedSecret(String sharedSecret) {
+		System.out.println("set shared secret " + sharedSecret);
 		this.sharedSecret = sharedSecret;
 	}
 

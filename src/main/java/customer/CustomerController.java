@@ -59,14 +59,15 @@ public class CustomerController {
         
         try {
             logger.info("Connecting to cloudant at: " + cloudantProperties.getProtocol() + "://" + cloudantProperties.getHost() + ":" + cloudantProperties.getPort());
-            final CloudantClient cloudantClient
-                    = ClientBuilder.url(new URL(cloudantProperties.getProtocol() + "://" + cloudantProperties.getHost() + ":" + cloudantProperties.getPort()))
+            final CloudantClient cloudantClient = ClientBuilder.url(new URL(cloudantProperties.getProtocol() + "://" + cloudantProperties.getHost() + ":" + cloudantProperties.getPort()))
                     .username(cloudantProperties.getUsername())
                     .password(cloudantProperties.getPassword())
                     .build();
-            cloudant = cloudantClient.database(cloudantProperties.getDatabase(), true);
 
+            cloudant = cloudantClient.database(cloudantProperties.getDatabase(), true);
+            logger.info("CLOUDANT " + cloudant);
             // create the design document if it doesn't exist
+
             if (!cloudant.contains("_design/username_searchIndex")) {
                 final Map<String, Object> names = new HashMap<String, Object>();
                 names.put("index", "function(doc){index(\"usernames\", doc.username); }");
