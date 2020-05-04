@@ -1,4 +1,4 @@
-# refarch-cloudnative-micro-customer: Spring Boot Microservice with CouchDB Database
+# customer-ms-spring: Spring Boot Microservice with CouchDB Database
 [![Build Status](https://travis-ci.org/ibm-cloud-architecture/refarch-cloudnative-micro-customer.svg?branch=master)](https://travis-ci.org/ibm-cloud-architecture/refarch-cloudnative-micro-customer)
 
 *This project is part of the 'IBM Cloud Native Reference Architecture' suite, available at
@@ -8,7 +8,6 @@ https://github.com/ibm-cloud-architecture/refarch-cloudnative-kubernetes/tree/sp
   * [Introduction](#introduction)
     + [APIs](#apis)
   * [Pre-requisites:](#pre-requisites)
-  * [Deploy Customer Application to Kubernetes Cluster](#deploy-customer-application-to-kubernetes-cluster)
   * [Validate the Customer Microservice API](#validate-the-customer-microservice-api)
     + [Setup](#setup)
       - [1. Create a temporary HS256 shared secret](#1-create-a-temporary-hs256-shared-secret)
@@ -23,7 +22,6 @@ https://github.com/ibm-cloud-architecture/refarch-cloudnative-kubernetes/tree/sp
     + [Deploy the CouchDB Docker Container](#deploy-the-couchdb-docker-container)
     + [Deploy the Customer Docker Container](#deploy-the-customer-docker-container)
   * [Run Customer Service application on localhost](#run-customer-service-application-on-localhost)
-  * [Deploy Customer Application on Open Liberty](#deploy-customer-application-on-openliberty)
   * [Optional: Setup CI/CD Pipeline](#optional-setup-cicd-pipeline)
   * [Conclusion](#conclusion)
   * [Contributing](#contributing)

@@ -1,3 +1,3 @@
 id: "20200430130127.44901200"
-project-name: customer-ms-spring
+project-name: oiricaud-customer-ms-spring
 stack: docker.io/kabanero/java-spring-boot2:0.3
