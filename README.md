@@ -86,44 +86,6 @@ git clone -b spring --single-branch https://github.com/ibm-cloud-architecture/re
 cd refarch-cloudnative-micro-customer
 ```
 
-## Deploy Customer Application to Kubernetes Cluster
-In this section, we are going to deploy the Customer Application, along with a CouchDB service, to a Kubernetes cluster using Helm. To do so, follow the instructions below:
-```bash
-# Add helm repos for CouchDB Chart
-helm repo add incubator http://storage.googleapis.com/kubernetes-charts-incubator
-
-# Install CouchDB Chart
-helm upgrade --install couchdb \
-  --version 0.2.2 \
-  --set fullnameOverride=customer-couchdb \
-  --set service.externalPort=5985 \
-  --set createAdminSecret=true \
-  --set adminUsername=user \
-  --set adminPassword=passw0rd \
-  --set clusterSize=1 \
-  --set persistentVolume.enabled=false \
-  incubator/couchdb
-
-# Go to Chart Directory
-cd chart/customer
-
-# Deploy Customer to Kubernetes cluster
-helm upgrade --install customer --set service.type=NodePort .
-```
-
-The last command will give you instructions on how to access/test the Customer application. Please note that before the Customer application starts, the CouchDB deployment must be fully up and running, which normally takes a couple of minutes. With Kubernetes [Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/), the Customer Deployment polls for CouchDB readiness status so that Customer can start once CouchDB is ready, or error out if CouchDB fails to start.
-
-Also, once CouchDB is fully up and running, a [`Kubernetes Job`](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/) will run to populate the CouchDB database with a new customer record so that it can be served by the application. This is done for convenience to be used by the Bluecompute Web Application.
-
-To check and wait for the deployment status, you can run the following command:
-```bash
-kubectl get deployments -w
-NAME                  DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-customer-customer     1         1         1            1           10h
-```
-
-The `-w` flag is so that the command above not only retrieves the deployment but also listens for changes. If you a 1 under the `CURRENT` column, that means that the customer app deployment is ready.
-
 ## Validate the Customer Microservice API
 Now that we have the customer service up and running, let's go ahead and test that the API works properly.
 
@@ -346,10 +308,6 @@ curl http://localhost:8082/micro/customer
 ```
 
 That's it, you have successfully deployed and tested the Customer microservice.
-
-## Deploy Customer Application on OpenLiberty
-
-The Spring Boot applications can be deployed on WebSphere Liberty as well. In this case, the embedded server i.e. the application server packaged up in the JAR file will be Liberty. For instructions on how to deploy the Customer application optimized for Docker on Open Liberty, which is the open source foundation for WebSphere Liberty, follow the instructions [here](OpenLiberty.MD)
 
 ## Optional: Setup CI/CD Pipeline
 If you would like to setup an automated Jenkins CI/CD Pipeline for this repository, we provided a sample [Jenkinsfile](Jenkinsfile), which uses the [Jenkins Pipeline](https://jenkins.io/doc/book/pipeline/) syntax of the [Jenkins Kubernetes Plugin](https://github.com/jenkinsci/kubernetes-plugin) to automatically create and run Jenkis Pipelines from your Kubernetes environment.
