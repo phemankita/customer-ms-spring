@@ -80,8 +80,8 @@ The Customer Microservice REST API is OAuth protected.
     + [`helm`](https://docs.helm.sh/using_helm/#installing-helm)
 * Clone customer repository:
 ```bash
-git clone -b spring --single-branch https://github.com/ibm-cloud-architecture/refarch-cloudnative-micro-customer.git
-cd refarch-cloudnative-micro-customer
+git clone https://github.com/ibm-garage-ref-storefront/customer-ms-spring
+cd customer-ms-spring
 ```
 
 ## Validate the Customer Microservice API
@@ -140,7 +140,7 @@ Where:
 ### 1. Create a Customer
 Let's create a new customer with username `foo` and password `bar` and its respective profile with the following command:
 ```bash
-curl -X POST -i "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/micro/customer" -H "Content-Type: application/json" -H "Authorization: Bearer ${jwt}" -d "{\"username\": \"${TEST_USER}\", \"password\": \"bar\", \"firstName\": \"foo\", \"lastName\": \"bar\", \"email\": \"foo@bar.com\"}"
+curl -X POST -i "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer" -H "Content-Type: application/json" -H "Authorization: Bearer ${jwt}" -d "{\"username\": \"${TEST_USER}\", \"password\": \"bar\", \"firstName\": \"foo\", \"lastName\": \"bar\", \"email\": \"foo@bar.com\"}"
 
 HTTP/1.1 201 Created
 Date: Mon, 20 Aug 2018 21:43:51 GMT
