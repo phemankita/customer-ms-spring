@@ -10,14 +10,15 @@
     <relativePath/>
   </parent>
 
-  <artifactId>default-application</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <packaging>jar</packaging>
-
   <properties>
     <java.version>1.8</java.version>
     <spring-cloud.version>Greenwich.SR5</spring-cloud.version>
   </properties>
+
+  <groupId>dev.appsody</groupId>
+  <artifactId>default-application</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
 
   <!-- versions will come from the parent pom (and included bom):
     mvn dependency:tree
@@ -25,12 +26,8 @@
     mvn help:effective-pom | grep '\.version>'
     -->
 
-  <dependencies>
-    <!-- From parent:
-      org.springframework.boot:spring-boot-starter
-      org.springframework.boot:spring-boot-starter-actuator
-      org.springframework.boot:spring-boot-starter-test
-     -->
+<dependencies>
+
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
@@ -45,7 +42,6 @@
       <artifactId>cloudant-spring-framework</artifactId>
       <version>0.0.4</version>
     </dependency>
-
     <dependency>
         <groupId>org.springframework.security</groupId>
         <artifactId>spring-security-config</artifactId>
@@ -102,6 +98,10 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-tomcat</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -166,5 +166,5 @@
       </plugin>
     </plugins>
   </build>
-
+  
 </project>

@@ -1,4 +1,4 @@
-package customer.model;
+package application.model;
 
 public class Customer {
 	private String _id;

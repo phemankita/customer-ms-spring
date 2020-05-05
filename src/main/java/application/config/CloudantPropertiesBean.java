@@ -1,4 +1,4 @@
-package customer.config;
+package application.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -19,7 +19,6 @@ public class CloudantPropertiesBean {
 	}
 
 	public String getProtocol() {
-		System.out.println("GETPROTOCOL ");
 		return protocol;
 	}
 

@@ -1,4 +1,4 @@
-export SERVICE_PORT=8082
+export SERVICE_PORT=8080
 export COUCHDB_PROTOCOL=http
 export COUCHDB_USER=admin
 export COUCHDB_PASSWORD=passw0rd

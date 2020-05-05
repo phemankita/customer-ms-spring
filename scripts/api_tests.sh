@@ -20,7 +20,7 @@ function parse_arguments() {
 
 	if [ -z "${MICROSERVICE_PORT}" ]; then
 		echo "MICROSERVICE_PORT not set. Using default key";
-		MICROSERVICE_PORT=8082;
+		MICROSERVICE_PORT=8080;
 	fi
 
 	# HS256_KEY
@@ -56,7 +56,7 @@ function parse_arguments() {
 		TEST_PASSWORD=passw0rd;
 	fi
 
-	echo "Using http://${MICROSERVICE_HOST}:${MICROSERVICE_PORT}"
+	echo "Using http://${MICROSERVICE_HOST}:${MICROSERVICE_PORT}/customer/"
 }
 
 function create_jwt_admin() {
@@ -94,7 +94,7 @@ function create_jwt_blue() {
 }
 
 function create_user() {
-	CURL=$(curl --write-out %{http_code} --silent --output /dev/null --max-time 5 -X POST "http://${MICROSERVICE_HOST}:${MICROSERVICE_PORT}/micro/customer" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt}" -d "{\"username\": \"${TEST_USER}\", \"password\": \"${TEST_PASSWORD}\", \"firstName\": \"user\", \"lastName\": \"name\", \"email\": \"user@name.com\"}");
+	CURL=$(curl --write-out %{http_code} --silent --output /dev/null --max-time 5 -X POST "http://${MICROSERVICE_HOST}:${MICROSERVICE_PORT}/customer" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt}" -d "{\"username\": \"${TEST_USER}\", \"password\": \"${TEST_PASSWORD}\", \"firstName\": \"user\", \"lastName\": \"name\", \"email\": \"user@name.com\"}");
 	echo "create_user status code: \"${CURL}\""
 
 	# Check for 201 Status Code
@@ -107,7 +107,7 @@ function create_user() {
 }
 
 function search_user() {
-	CURL=$(curl -s --max-time 5 -X GET "http://${MICROSERVICE_HOST}:${MICROSERVICE_PORT}/micro/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}" | jq -r '.[0].username' | grep ${TEST_USER});
+	CURL=$(curl -s --max-time 5 -X GET "http://${MICROSERVICE_HOST}:${MICROSERVICE_PORT}/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}" | jq -r '.[0].username' | grep ${TEST_USER});
 	echo "Found user with name: \"${CURL}\""
 
 	if [ -z "${CURL}" ] || [ "$CURL" != "$TEST_USER" ]; then
@@ -119,10 +119,10 @@ function search_user() {
 }
 
 function delete_user() {
-	MICROSERVICE_ID=$(curl -s --max-time 5 -X GET "http://${MICROSERVICE_HOST}:${MICROSERVICE_PORT}/micro/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}" | jq -r '.[0].customerId');
+	MICROSERVICE_ID=$(curl -s --max-time 5 -X GET "http://${MICROSERVICE_HOST}:${MICROSERVICE_PORT}/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}" | jq -r '.[0].customerId');
 
 	echo "Deleting customer with name: ${TEST_USER} and id: ${MICROSERVICE_ID}"
-	CURL=$(curl --write-out %{http_code} --silent --output /dev/null --max-time 5 -X DELETE "http://${MICROSERVICE_HOST}:${MICROSERVICE_PORT}/micro/customer/${MICROSERVICE_ID}" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt}");
+	CURL=$(curl --write-out %{http_code} --silent --output /dev/null --max-time 5 -X DELETE "http://${MICROSERVICE_HOST}:${MICROSERVICE_PORT}/customer/${MICROSERVICE_ID}" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt}");
 
 	# Check for 201 Status Code
 	if [ -z "${CURL}" ] || [ "$CURL" != "200" ]; then

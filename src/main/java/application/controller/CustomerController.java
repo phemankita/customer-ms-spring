@@ -1,4 +1,4 @@
-package customer;
+package application.controller;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -30,15 +30,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import application.config.CloudantPropertiesBean;
+import application.model.Customer;
+
 import com.cloudant.client.api.ClientBuilder;
 import com.cloudant.client.api.CloudantClient;
 import com.cloudant.client.api.Database;
 import com.cloudant.client.api.model.Response;
 import com.cloudant.client.org.lightcouch.NoDocumentException;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
-
-import customer.config.CloudantPropertiesBean;
-import customer.model.Customer;
 
 /**
  * REST Controller to manage Customer database
@@ -53,6 +53,7 @@ public class CustomerController {
     @Autowired
     private CloudantPropertiesBean cloudantProperties;
     
+    
     @PostConstruct
     private void init() throws MalformedURLException {
         logger.debug(cloudantProperties.toString());
@@ -63,11 +64,11 @@ public class CustomerController {
                     .username(cloudantProperties.getUsername())
                     .password(cloudantProperties.getPassword())
                     .build();
-
+            
             cloudant = cloudantClient.database(cloudantProperties.getDatabase(), true);
-            logger.info("CLOUDANT " + cloudant);
+            
+            
             // create the design document if it doesn't exist
-
             if (!cloudant.contains("_design/username_searchIndex")) {
                 final Map<String, Object> names = new HashMap<String, Object>();
                 names.put("index", "function(doc){index(\"usernames\", doc.username); }");
@@ -99,7 +100,8 @@ public class CustomerController {
      */
     @RequestMapping("/check")
     protected @ResponseBody ResponseEntity<String> check() {
-    	// test the cloudant connection
+        // test the cloudant connection
+        System.out.println("checking...");
     	try {
 			getCloudantDatabase().info();
             return  ResponseEntity.ok("It works!");
@@ -115,6 +117,7 @@ public class CustomerController {
     @PreAuthorize("#oauth2.hasScope('admin')")
     @RequestMapping(value = "/customer/search", method = RequestMethod.GET)
     protected @ResponseBody ResponseEntity<?> searchCustomers(@RequestHeader Map<String, String> headers, @RequestParam(required=true) String username) {
+        System.out.println("Searching for customer " + username);
         try {
         	
         	if (username == null) {

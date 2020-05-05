@@ -1,13 +1,13 @@
 #!/bin/bash
 URL="$1";
-SERVICE_PATH="micro/customer/search";
+SERVICE_PATH="customer/search";
 
 HS256_KEY=E6526VJkKYhyTFRFMC0pTECpHcZ7TGcq8pKsVVgz9KtESVpheEO284qKzfzg8HpWNBPeHOxNGlyudUHi6i8tFQJXC8PiI48RUpMh23vPDLGD35pCM0417gf58z5xlmRNii56fwRCmIhhV7hDsm3KO2jRv4EBVz7HrYbzFeqI45CaStkMYNipzSm2duuer7zRdMjEKIdqsby0JfpQpykHmC5L6hxkX0BT7XWqztTr6xHCwqst26O0g8r7bXSYjp4a;
 TEST_USER=user;
 TEST_PASSWORD=passw0rd;
 
 if [ -z "$URL" ]; then
-	URL="http://localhost:8082"
+	URL="http://localhost:8080"
 	echo "No URL provided! Using ${URL}"
 fi
 

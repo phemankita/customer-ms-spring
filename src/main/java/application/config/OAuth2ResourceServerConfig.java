@@ -1,4 +1,4 @@
-package customer;
+package application.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,7 +17,7 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 
-import customer.config.JwtConfig;
+
 
 @Configuration
 @EnableWebSecurity
@@ -58,7 +58,6 @@ public class OAuth2ResourceServerConfig extends ResourceServerConfigurerAdapter 
     @Qualifier("jwtAccessTokenConverter")
 	protected JwtAccessTokenConverter jwtAccessTokenConverter() {
 		final JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
-	   
 		/* for HS256, set the signing key */
         converter.setSigningKey(securityConfig.getSharedSecret());
 		return converter;
@@ -68,6 +67,7 @@ public class OAuth2ResourceServerConfig extends ResourceServerConfigurerAdapter 
     @Primary
     protected DefaultTokenServices tokenServices() {
         final DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
+        System.out.println("tokenServices() " + tokenStore());
         defaultTokenServices.setTokenStore(tokenStore());
         return defaultTokenServices;
     }

@@ -8,7 +8,7 @@ URL="$1";
 HEALTH_CHECK="health";
 
 if [ -z "$URL" ]; then
-	URL="http://localhost:8092"
+	URL="http://localhost:8080"
 	echo "No URL provided! Using ${URL}"
 fi
 

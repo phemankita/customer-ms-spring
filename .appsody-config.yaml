@@ -1,2 +1,2 @@
-project-name: customer-ms-spring
+project-name: samples
 stack: docker.io/kabanero/java-spring-boot2:0.3

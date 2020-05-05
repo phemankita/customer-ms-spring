@@ -4,7 +4,7 @@ HS256_KEY=E6526VJkKYhyTFRFMC0pTECpHcZ7TGcq8pKsVVgz9KtESVpheEO284qKzfzg8HpWNBPeHO
 TEST_USER=user
 TEST_PASSWORD=passw0rd
 CUSTOMER_HOST=127.0.0.1
-CUSTOMER_PORT=8082
+CUSTOMER_PORT=8080
 
 # INVENTORY_URL
 if [ -z "$NAMESPACE" ]; then
@@ -47,7 +47,7 @@ function create_jwt_blue() {
 }
 
 function create_user() {
-	CURL=$(curl --write-out %{http_code} --silent --output /dev/null --max-time 5 -X POST "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/micro/customer" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt}" -d "{\"username\": \"${TEST_USER}\", \"password\": \"${TEST_PASSWORD}\", \"firstName\": \"user\", \"lastName\": \"name\", \"email\": \"user@name.com\"}");
+	CURL=$(curl --write-out %{http_code} --silent --output /dev/null --max-time 5 -X POST "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt}" -d "{\"username\": \"${TEST_USER}\", \"password\": \"${TEST_PASSWORD}\", \"firstName\": \"user\", \"lastName\": \"name\", \"email\": \"user@name.com\"}");
 
 	# Check for 201 Status Code
 	if [ "$CURL" == "400" ]; then
@@ -65,7 +65,7 @@ function create_user() {
 }
 
 function search_user() {
-	CURL=$(curl -s --max-time 5 -X GET "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/micro/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}" | jq -r '.[0].username' | grep ${TEST_USER});
+	CURL=$(curl -s --max-time 5 -X GET "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}" | jq -r '.[0].username' | grep ${TEST_USER});
 	#echo "Found user with name: \"${CURL}\""
 
 	if [ "$CURL" != "$TEST_USER" ]; then
@@ -78,10 +78,10 @@ function search_user() {
 }
 
 function delete_user() {
-	CUSTOMER_ID=$(curl -s --max-time 5 -X GET "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/micro/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}" | jq -r '.[0].customerId');
+	CUSTOMER_ID=$(curl -s --max-time 5 -X GET "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}" | jq -r '.[0].customerId');
 
 	#echo "Deleting customer with name: ${TEST_USER} and id: ${CUSTOMER_ID}"
-	CURL=$(curl --write-out %{http_code} --silent --output /dev/null --max-time 5 -X DELETE "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/micro/customer/${CUSTOMER_ID}" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt}");
+	CURL=$(curl --write-out %{http_code} --silent --output /dev/null --max-time 5 -X DELETE "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/${CUSTOMER_ID}" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt}");
 
 	# Check for 201 Status Code
 	if [ "$CURL" != "200" ]; then
@@ -103,7 +103,7 @@ create_jwt_blue
 # Wait for customer to be ready?
 
 # Forward port
-echo "Forwarding customer port 8082"
+echo "Forwarding customer port 8080"
 kubectl -n $NAMESPACE port-forward deployment/customer 8082:8082 --pod-running-timeout=1h &
 echo "Sleeping for 3 seconds while connection is established..."
 sleep 3

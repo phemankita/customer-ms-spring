@@ -40,9 +40,14 @@ Here is an overview of the project's features:
 - Uses [`Docker`](https://docs.docker.com/) to package application binary and its dependencies.
 - Uses [`Helm`](https://helm.sh/) to package application and CouchDB deployment configuration and deploy to a [`Kubernetes`](https://kubernetes.io/) cluster.
 
+## How to run
+To run the application, ensure you have `appsody` installed.
+        `appsody run`
+        `appsody test`
+        `appsody build`
 ## APIs
 The Customer Microservice REST API is OAuth protected.
-- `POST /micro/customer`
+- `POST /customer`
   - Create a customer. - Return customer by username.  The caller of this API must pass a valid OAuth token with the scope `admin`.  The Customer object must be passed as JSON object in the request body with the following format:
     ```
     {
@@ -57,19 +62,19 @@ The Customer Microservice REST API is OAuth protected.
 
     On success, `HTTP 201` is returned with the ID of the created user in the `Location` response header.  This API is currently not called as it is not a function of the BlueCompute application.
 
-- `PUT /micro/customer/{id}`
+- `PUT /customer/{id}`
   - Update a customer record.  The caller of this API must pass a valid OAuth token with the scope `blue`.  The full Customer object must be passed in the request body.  If the `id` matches the customer ID passed in the `user_name` claim in the JWT, the customer object is updated; otherwise `HTTP 401` is returned.  This API is currently not called as it is not a function of the BlueCompute application.
 
-- `GET /micro/customer`
+- `GET /customer`
   - Returns all customers.  The caller of this API must pass a valid OAuth token with the scope `blue`.  The OAuth token is a JWT signed and is verified using a HS256 shared key.  A JSON object array is returned consisting of only users that match the customer ID embedded in the JWT claim `user_name`, either length 0 or 1.
 
-- `GET /micro/customer/{id}`
+- `GET /customer/{id}`
   - Return customer by ID.  The caller of this API must pass a valid OAuth token with the scope `blue`.  The OAuth token is a JWT signed and is verified using a HS256 shared key.  If the `id` matches the customer ID passed in the `user_name` claim in the JWT, it is returned as a JSON object in the response; otherwise `HTTP 401` is returned.
 
-- `GET /micro/customer/search`
+- `GET /customer/search`
   - Return customer by username.  The caller of this API must pass a valid OAuth token with the scope `admin`.  This API is called by the [Auth Microservice](https://github.com/ibm-cloud-architecture/refarch-cloudnative-auth) when authenticating a user.  A JSON object array is returned consisting of only users that match the customer username (either length 0 or 1).
 
-- `DELETE /micro/customer/{id}`
+- `DELETE /customer/{id}`
   - Delete a customer record.  The caller of this API must pass a valid OAuth token with the scope `blue`.  If the `id` matches the customer ID passed in the `user_name` claim in the JWT, the customer object is deleted; otherwise `HTTP 401` is returned.  This API is currently not called as it is not a function of the BlueCompute application.
 
 ## Pre-requisites:
@@ -118,6 +123,12 @@ cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 256 | head -n 1 |
 Note that if the [Authorization Server](https://github.com/ibm-cloud-architecture/refarch-cloudnative-auth) is also deployed, it must use the *same* HS256 shared secret.
 
 #### c. Generate a JWT Token with `admin` Scope
+
+Where:
+* `admin` is the scope needed to create the user.
+* `${TEST_USER}` is the user to create, i.e. `foo`.
+* `${HS256_KEY}` is the 2048-bit secret from the previous step.
+
 To generate a JWT Token with an `admin` scope, which will let you create/get/delete users, run the commands below:
 ```bash
 # JWT Header
@@ -131,11 +142,6 @@ jwt4=$(echo -n "${jwt3}" | openssl dgst -binary -sha256 -hmac "${HS256_KEY}" | o
 # Complete JWT
 jwt=$(echo -n "${jwt3}.${jwt4}");
 ```
-
-Where:
-* `admin` is the scope needed to create the user.
-* `${TEST_USER}` is the user to create, i.e. `foo`.
-* `${HS256_KEY}` is the 2048-bit secret from the previous step.
 
 ### 1. Create a Customer
 Let's create a new customer with username `foo` and password `bar` and its respective profile with the following command:
@@ -151,7 +157,7 @@ Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
 X-Application-Context: customer-microservice:8082
-Location: http://localhost:8082/micro/customer/41757d0170344f9ea47a2d9634bc9ba7
+Location: http://localhost:8080/customer/41757d0170344f9ea47a2d9634bc9ba7
 Content-Length: 0
 Server: Jetty(9.2.13.v20150730)
 ```
@@ -171,7 +177,7 @@ CUSTOMER_ID=41757d0170344f9ea47a2d9634bc9ba7
 ### 2. Search the Customer
 To search users with a particular username, i.e. `foo`, run the command below:
 ```bash
-curl -s -X GET "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/micro/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}"
+curl -s -X GET "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}"
 
 [{"username":"foo","password":"bar","firstName":"foo","lastName":"bar","email":"foo@bar.com","imageUrl":null,"customerId":"7145e43859764b3e8abc76784f1eb36a"}]
 ```
@@ -208,7 +214,7 @@ Where:
 #### Use `blue` Scoped JWT Token to Retrieve the Customer Record
 To retrieve the customer record using the `blue` scoped JWT token, run the command below:
 ```bash
-curl -s -X GET "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/micro/customer" -H "Authorization: Bearer ${jwt_blue}"
+curl -s -X GET "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer" -H "Authorization: Bearer ${jwt_blue}"
 
 [{"username":"foo","password":"bar","firstName":"foo","lastName":"bar","email":"foo@bar.com","imageUrl":null,"customerId":"7145e43859764b3e8abc76784f1eb36a"}]
 ```
@@ -218,7 +224,7 @@ Note that *only* the customer object identified by the encoded `user_name` is re
 ### 4. Delete the Customer
 Using either the `admin` or the `blue` scoped JWT token, you can delete the customer record. If using the `blue` scoped JWT token, *only* the customer object identified by the encoded `user_name` can be deleted. To run with the `blue` scoped JWT token to delete the user, run the command below:
 ```bash
-curl -X DELETE -i "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/micro/customer/${CUSTOMER_ID}" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt_blue}"
+curl -X DELETE -i "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/${CUSTOMER_ID}" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt_blue}"
 
 HTTP/1.1 200 OK
 Date: Mon, 20 Aug 2018 22:20:00 GMT
@@ -274,7 +280,7 @@ Where `${COUCHDB_IP_ADDRESS}` is the IP address of the CouchDB container, which 
 
 If everything works successfully, you should be able to get some data when you run the following command:
 ```bash
-curl http://localhost:8082/micro/customer
+curl http://localhost:8082/customer
 ```
 
 ## Run Customer Service application on localhost
@@ -302,7 +308,7 @@ java -jar build/libs/micro-customer-0.0.1.jar
 
 4. Validate. You should get a list of all customer items:
 ```bash
-curl http://localhost:8082/micro/customer
+curl http://localhost:8082/customer
 ```
 
 That's it, you have successfully deployed and tested the Customer microservice.
