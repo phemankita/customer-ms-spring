@@ -39,15 +39,14 @@ Here is an overview of the project's features:
 - Uses [`Spring Data JPA`](http://projects.spring.io/spring-data-jpa/) to persist data to CouchDB database.
 - Uses [`CouchDB`](http://couchdb.apache.org/) as the customer database.
 - Uses [`Docker`](https://docs.docker.com/) to package application binary and its dependencies.
-- Uses [`Helm`](https://helm.sh/) to package application and CouchDB deployment configuration and deploy to a [`Kubernetes`](https://kubernetes.io/) cluster.
 
         
 ## APIs
 The Customer Microservice REST API is OAuth protected.
+
 ![Swagger](static/swagger.png?raw=true)
 
-## 
-docker run -p 3306:3306 --name some-mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:latest
+http://localhost:8080/swagger-ui.html#/
 
 ## Pre-requisites:
 * Create a Kubernetes Cluster by following the steps [here](https://github.com/ibm-cloud-architecture/refarch-cloudnative-kubernetes#create-a-kubernetes-cluster).
@@ -130,6 +129,13 @@ jwt=$(echo -n "${jwt3}.${jwt4}");
 
 ### 1. Create a Customer
 Let's create a new customer with username `foo` and password `bar` and its respective profile with the following command:
+
+Where:
+* `${CUSTOMER_HOST}` is the hostname/ip address for the customer microservice.
+* `${CUSTOMER_PORT}` is the port for the customer microservice.
+* `${jwt}` is the JWT token created in the previous step.
+* `${TEST_USER}` is the user to create, i.e. `foo`.
+
 ```bash
 curl -X POST -i "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer" -H "Content-Type: application/json" -H "Authorization: Bearer ${jwt}" -d "{\"username\": \"${TEST_USER}\", \"password\": \"bar\", \"firstName\": \"foo\", \"lastName\": \"bar\", \"email\": \"foo@bar.com\"}"
 
@@ -147,12 +153,6 @@ Content-Length: 0
 Server: Jetty(9.2.13.v20150730)
 ```
 
-Where:
-* `${CUSTOMER_HOST}` is the hostname/ip address for the customer microservice.
-* `${CUSTOMER_PORT}` is the port for the customer microservice.
-* `${jwt}` is the JWT token created in the previous step.
-* `${TEST_USER}` is the user to create, i.e. `foo`.
-
 Note the `Location` header returned, which contains the `CUSTOMER_ID` of the created customer.  For the GET calls below, copy the ID in the `Location` header (e.g. in the above, `41757d0170344f9ea47a2d9634bc9ba7`). This id will be used later when deleting the user. To save it in your environment, run the following command using the the id returned above:
 ```bash
 # In this case, we are using the id that was returned in our sample command above, which will differ for you
@@ -161,23 +161,28 @@ CUSTOMER_ID=41757d0170344f9ea47a2d9634bc9ba7
 
 ### 2. Search the Customer
 To search users with a particular username, i.e. `foo`, run the command below:__
-```bash
-curl -s -X GET "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}"
-
-[{"username":"foo","password":"bar","firstName":"foo","lastName":"bar","email":"foo@bar.com","imageUrl":null,"customerId":"7145e43859764b3e8abc76784f1eb36a"}]
-```
-
 Where:
 * `${CUSTOMER_HOST}` is the hostname/ip address for the customer microservice.
 * `${CUSTOMER_PORT}` is the port for the customer microservice.
 * `${jwt}` is the JWT token created in the previous step.
 * `${TEST_USER}` is the user to create, i.e. `foo`.
 
+```bash
+curl -s -X GET "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}"
+
+[{"username":"foo","password":"bar","firstName":"foo","lastName":"bar","email":"foo@bar.com","imageUrl":null,"customerId":"7145e43859764b3e8abc76784f1eb36a"}]
+```
+
 ### 3. Get the Customer
 To use the customer service as a non-admin user and still be able to retrieve a user's own record, you must create a JWT token with the `blue` scope and pass the customer id as the value for the `user_name` payload. By doing this, we guarantee that only the identied user can retrieve/update/delete it's own record.
 
 #### Generate a JWT Token with `blue` Scope for New Customer
 In order for the newly created user to retrieve its own record, and only its own record, you will need to create a new JWT token with the scope `blue` and a payload that has the `CUSTOMER_ID` as the value for `user_name`. To generate the new JWT token, run the following commands:
+Where:
+* `blue` is the scope needed to create the user.
+* `${CUSTOMER_ID}` is the id of the customer user crated earlier, i.e. `41757d0170344f9ea47a2d9634bc9ba7`.
+* `${HS256_KEY}` is the 2048-bit secret from the previous step.
+
 ```bash
 # JWT Header
 jwt1=$(echo -n '{"alg":"HS256","typ":"JWT"}' | openssl enc -base64);
@@ -191,11 +196,6 @@ jwt4=$(echo -n "${jwt3}" | openssl dgst -binary -sha256 -hmac "${HS256_KEY}" | o
 jwt_blue=$(echo -n "${jwt3}.${jwt4}");
 ```
 
-Where:
-* `blue` is the scope needed to create the user.
-* `${CUSTOMER_ID}` is the id of the customer user crated earlier, i.e. `41757d0170344f9ea47a2d9634bc9ba7`.
-* `${HS256_KEY}` is the 2048-bit secret from the previous step.
-
 #### Use `blue` Scoped JWT Token to Retrieve the Customer Record
 To retrieve the customer record using the `blue` scoped JWT token, run the command below:
 ```bash
@@ -208,6 +208,12 @@ Note that *only* the customer object identified by the encoded `user_name` is re
 
 ### 4. Delete the Customer
 Using either the `admin` or the `blue` scoped JWT token, you can delete the customer record. If using the `blue` scoped JWT token, *only* the customer object identified by the encoded `user_name` can be deleted. To run with the `blue` scoped JWT token to delete the user, run the command below:
+Where:
+* `${CUSTOMER_HOST}` is the hostname/ip address for the customer microservice.
+* `${CUSTOMER_PORT}` is the port for the customer microservice.
+* `${CUSTOMER_ID}` is the id of the customer user crated earlier, i.e. `41757d0170344f9ea47a2d9634bc9ba7`.
+* `${jwt_blue}` is the JWT token created in the previous step.
+
 ```bash
 curl -X DELETE -i "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/${CUSTOMER_ID}" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt_blue}"
 
@@ -217,12 +223,6 @@ X-Application-Context: customer-microservice:8082
 Content-Length: 0
 Server: Jetty(9.2.13.v20150730)
 ```
-
-Where:
-* `${CUSTOMER_HOST}` is the hostname/ip address for the customer microservice.
-* `${CUSTOMER_PORT}` is the port for the customer microservice.
-* `${CUSTOMER_ID}` is the id of the customer user crated earlier, i.e. `41757d0170344f9ea47a2d9634bc9ba7`.
-* `${jwt_blue}` is the JWT token created in the previous step.
 
 If successful, you should get a `200 OK` status code as shown in the command above.
 
@@ -243,10 +243,10 @@ Make sure to select the IP Address in the `IPAddress` field. You will use this I
     
 ### Deploy the Customer backend to Openshift
 
-            docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
-            oc login --token=$YOUR_API_TOKEN --server=$CLUSTER_IP_ADDRESS
-            oc new-project=customer-api
-            appsody deploy -t $DOCKER_REGISTRY/$DOCKER_REPO:$VERSION --push --namespace customer-api 
+docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+oc login --token=$YOUR_API_TOKEN --server=$CLUSTER_IP_ADDRESS
+oc new-project=customer-api
+appsody deploy -t $DOCKER_REGISTRY/$DOCKER_REPO:$VERSION --push --namespace customer-api 
 
 Where `${COUCHDB_IP_ADDRESS}` is the IP address of the CouchDB container, which is only accessible from the Docker container network.
 
