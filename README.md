@@ -46,7 +46,7 @@ The Customer Microservice REST API is OAuth protected.
 
 ![Swagger](static/swagger.png?raw=true)
 
-http://localhost:8080/swagger-ui.html#/
+You can view the API by running `appsody run` and visiting http://localhost:8080/swagger-ui.html#/
 
 ## Pre-requisites:
 * Create a Kubernetes Cluster by following the steps [here](https://github.com/ibm-cloud-architecture/refarch-cloudnative-kubernetes#create-a-kubernetes-cluster).
@@ -243,10 +243,10 @@ Make sure to select the IP Address in the `IPAddress` field. You will use this I
     
 ### Deploy the Customer backend to Openshift
 
-docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
-oc login --token=$YOUR_API_TOKEN --server=$CLUSTER_IP_ADDRESS
-oc new-project=customer-api
-appsody deploy -t $DOCKER_REGISTRY/$DOCKER_REPO:$VERSION --push --namespace customer-api 
+    docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+    oc login --token=$YOUR_API_TOKEN --server=$CLUSTER_IP_ADDRESS
+    oc new-project=customer-api
+    appsody deploy -t $DOCKER_REGISTRY/$DOCKER_REPO:$VERSION --push --namespace customer-api 
 
 Where `${COUCHDB_IP_ADDRESS}` is the IP address of the CouchDB container, which is only accessible from the Docker container network.
 
@@ -273,9 +273,9 @@ Once CouchDB is ready, we can run the Spring Boot Customer application locally a
 appsody run
 ```
 
-3. Validate. You should get a list of all customer items:
+3. Validate. You should be able to do API calls via swagger by visiting
 ```bash
-curl http://localhost:8080/customer
+http://localhost:8080/swagger-ui.html#/
 ```
 
 That's it, you have successfully deployed and tested the Customer microservice.
