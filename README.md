@@ -1,7 +1,7 @@
 # customer-ms-spring: Spring Boot Microservice with CouchDB Database
 [![Build Status](https://travis-ci.org/ibm-cloud-architecture/refarch-cloudnative-micro-customer.svg?branch=master)](https://travis-ci.org/ibm-cloud-architecture/refarch-cloudnative-micro-customer)
 
-*This project is part of the 'IBM Cloud Native Reference Architecture' suite, available at
+*This project is part of the `IBM Cloud Native Reference Architecture` suite, available at
 https://github.com/ibm-cloud-architecture/refarch-cloudnative-kubernetes/tree/spring*
 
 ## Table of Contents
@@ -25,7 +25,6 @@ https://github.com/ibm-cloud-architecture/refarch-cloudnative-kubernetes/tree/sp
   * [Optional: Setup CI/CD Pipeline](#optional-setup-cicd-pipeline)
   * [Conclusion](#conclusion)
   * [Contributing](#contributing)
-    + [GOTCHAs](#gotchas)
     + [Contributing a New Chart Package to Microservices Reference Architecture Helm Repository](#contributing-a-new-chart-package-to-microservices-reference-architecture-helm-repository)
 
 ## Introduction
@@ -40,11 +39,7 @@ Here is an overview of the project's features:
 - Uses [`Docker`](https://docs.docker.com/) to package application binary and its dependencies.
 - Uses [`Helm`](https://helm.sh/) to package application and CouchDB deployment configuration and deploy to a [`Kubernetes`](https://kubernetes.io/) cluster.
 
-## How to run
-To run the application, ensure you have `appsody` installed.
-        `appsody run`
-        `appsody test`
-        `appsody build`
+        
 ## APIs
 The Customer Microservice REST API is OAuth protected.
 - `POST /customer`
@@ -82,7 +77,8 @@ The Customer Microservice REST API is OAuth protected.
 * Install the following CLI's on your laptop/workstation:
     + [`docker`](https://docs.docker.com/install/)
     + [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-    + [`helm`](https://docs.helm.sh/using_helm/#installing-helm)
+    + [`appsody`](https://appsody.dev/docs/installing/installing-appsody/)
+    
 * Clone customer repository:
 ```bash
 git clone https://github.com/ibm-garage-ref-storefront/customer-ms-spring
@@ -97,7 +93,13 @@ Now that we have the customer service up and running, let's go ahead and test th
 To make going through this document easier, we recommend you create environment variables for the customer service hostname/IP and port. To do so, run the following commands:
 ```bash
 export CUSTOMER_HOST=localhost
-export CUSTOMER_PORT=8082
+export CUSTOMER_PORT=8080
+export COUCHDB_PROTOCOL=http
+export COUCHDB_USER=admin
+export COUCHDB_PASSWORD=passw0rd
+export COUCHDB_HOST=127.0.0.1
+export COUCHDB_PORT=5985
+export COUCHDB_DATABASE=customers
 ```
 
 Where:
@@ -122,7 +124,13 @@ cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 256 | head -n 1 |
 
 Note that if the [Authorization Server](https://github.com/ibm-cloud-architecture/refarch-cloudnative-auth) is also deployed, it must use the *same* HS256 shared secret.
 
-#### c. Generate a JWT Token with `admin` Scope
+#### c. Compile and test the java application 
+You can run the application with appsody such as
+`appsody run`
+`appsody test`
+
+
+#### d. Generate a JWT Token with `admin` Scope
 
 Where:
 * `admin` is the scope needed to create the user.
@@ -241,9 +249,6 @@ Where:
 
 If successful, you should get a `200 OK` status code as shown in the command above.
 
-## Deploy Customer Application on Docker
-You can also run the Customer Application locally on Docker. Before we show you how to do so, you will need to have a running CouchDB deployment running somewhere.
-
 ### Deploy the CouchDB Docker Container
 The easiest way to get CouchDB running is via a Docker container. To do so, run the following commands:
 ```bash
@@ -258,29 +263,19 @@ docker inspect customercouchdb | grep "IPAddress"
 ```
 Make sure to select the IP Address in the `IPAddress` field. You will use this IP address when deploying the Customer container.
 
-### Deploy the Customer Docker Container
-To deploy the Customer container, run the following commands:
-```bash
-# Build the Docker Image
-docker build -t customer .
+    
+### Deploy the Customer backend to Openshift
 
-# Start the Customer Container
-docker run --name customer \
-    -e COUCHDB_PROTOCOL=http \
-    -e COUCHDB_USER=admin \
-    -e COUCHDB_PASSWORD=passw0rd \
-    -e COUCHDB_HOST=${COUCHDB_IP_ADDRESS} \
-    -e COUCHDB_PORT=5984 \
-    -e HS256_KEY=${HS256_KEY} \
-    -p 8082:8082 \
-    -d customer
-```
+            docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+            oc login --token=$YOUR_API_TOKEN --server=$CLUSTER_IP_ADDRESS
+            oc new-project=customer-api
+            appsody deploy -t $DOCKER_REGISTRY/$DOCKER_REPO:$VERSION --push --namespace customer-api 
 
 Where `${COUCHDB_IP_ADDRESS}` is the IP address of the CouchDB container, which is only accessible from the Docker container network.
 
 If everything works successfully, you should be able to get some data when you run the following command:
 ```bash
-curl http://localhost:8082/customer
+curl http://localhost:8080/customer
 ```
 
 ## Run Customer Service application on localhost
@@ -296,28 +291,17 @@ Once CouchDB is ready, we can run the Spring Boot Customer application locally a
     * **port:** 5985
     * **database:** customers
 
-2. Build the application:
+2. Build and run the application:
 ```bash
-./gradlew build -x test
+appsody run
 ```
 
-3. Run the application on localhost:
+3. Validate. You should get a list of all customer items:
 ```bash
-java -jar build/libs/micro-customer-0.0.1.jar
-```
-
-4. Validate. You should get a list of all customer items:
-```bash
-curl http://localhost:8082/customer
+curl http://localhost:8080/customer
 ```
 
 That's it, you have successfully deployed and tested the Customer microservice.
-
-## Optional: Setup CI/CD Pipeline
-If you would like to setup an automated Jenkins CI/CD Pipeline for this repository, we provided a sample [Jenkinsfile](Jenkinsfile), which uses the [Jenkins Pipeline](https://jenkins.io/doc/book/pipeline/) syntax of the [Jenkins Kubernetes Plugin](https://github.com/jenkinsci/kubernetes-plugin) to automatically create and run Jenkis Pipelines from your Kubernetes environment.
-
-To learn how to use this sample pipeline, follow the guide below and enter the corresponding values for your environment and for this repository:
-* https://github.com/ibm-cloud-architecture/refarch-cloudnative-devops-kubernetes
 
 ## Conclusion
 You have successfully deployed and tested the Customer Microservice and a CouchDB database both on a Kubernetes Cluster and in local Docker Containers.
@@ -326,22 +310,4 @@ To see the Customer app working in a more complex microservices use case, checko
 
 ## Contributing
 If you would like to contribute to this repository, please fork it, submit a PR, and assign as reviewers any of the GitHub users listed here:
-* https://github.com/ibm-cloud-architecture/refarch-cloudnative-micro-customer/graphs/contributors
-
-### GOTCHAs
-1. We use [Travis CI](https://travis-ci.org/) for our CI/CD needs, so when you open a Pull Request you will trigger a build in Travis CI, which needs to pass before we consider merging the PR. We use Travis CI to test the following:
-    * Create and load a CouchDB database with the customer static data.
-    * Building and running the Customer app against the CouchDB database and run API tests.
-    * Build and Deploy a Docker Container, using the same CouchDB database.
-    * Run API tests against the Docker Container.
-    * Deploy a minikube cluster to test Helm charts.
-    * Download Helm Chart dependencies and package the Helm chart.
-    * Deploy the Helm Chart into Minikube.
-    * Run API tests against the Helm Chart.
-
-2. We use the Community Chart for CouchDB as the dependency chart for the Customer Chart. If you would like to learn more about that chart and submit issues/PRs, please check out its repo here:
-    * https://github.com/helm/charts/tree/master/stable/couchdb
-
-### Contributing a New Chart Package to Microservices Reference Architecture Helm Repository
-To contribute a new chart version to the [Microservices Reference Architecture](https://github.com/ibm-cloud-architecture/refarch-cloudnative-kubernetes/tree/spring) helm repository, follow its guide here:
-* https://github.com/ibm-cloud-architecture/refarch-cloudnative-kubernetes/tree/spring#contributing-a-new-chart-to-the-helm-repositories
+git clone https://github.com/ibm-garage-ref-storefront/customer-ms-spring
