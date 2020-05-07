@@ -32,6 +32,11 @@
         <version>5.1.1.RELEASE</version>
     </dependency>
     <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-spring-framework</artifactId>
       <version>0.0.4</version>
