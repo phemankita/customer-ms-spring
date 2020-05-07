@@ -218,8 +218,8 @@ public class CustomerController {
         	// TODO: no one should have access to do this, it's not exposed to APIC
             final Database cloudant = getCloudantDatabase();
             
-            if (payload.getCustomerId() != null && cloudant.contains(payload.getCustomerId())) {
-                return ResponseEntity.badRequest().body("Id " + payload.getCustomerId() + " already exists");
+            if (payload.get_id() != null && cloudant.contains(payload.get_id())) {
+                return ResponseEntity.badRequest().body("Id " + payload.get_id() + " already exists");
             }
             
 			final List<Customer> customers = getCloudantDatabase().findByIndex(
