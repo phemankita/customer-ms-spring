@@ -44,35 +44,10 @@ Here is an overview of the project's features:
         
 ## APIs
 The Customer Microservice REST API is OAuth protected.
-- `POST /customer`
-  - Create a customer. - Return customer by username.  The caller of this API must pass a valid OAuth token with the scope `admin`.  The Customer object must be passed as JSON object in the request body with the following format:
-    ```
-    {
-      "username": <username>,
-      "password": <password>,
-      "email": <email address>,
-      "firstName": <first name>,
-      "lastName": <last name>,
-      "imageUrl": <image URL>
-    }
-    ```
+![Swagger](static/swagger.png?raw=true)
 
-    On success, `HTTP 201` is returned with the ID of the created user in the `Location` response header.  This API is currently not called as it is not a function of the BlueCompute application.
-
-- `PUT /customer/{id}`
-  - Update a customer record.  The caller of this API must pass a valid OAuth token with the scope `blue`.  The full Customer object must be passed in the request body.  If the `id` matches the customer ID passed in the `user_name` claim in the JWT, the customer object is updated; otherwise `HTTP 401` is returned.  This API is currently not called as it is not a function of the BlueCompute application.
-
-- `GET /customer`
-  - Returns all customers.  The caller of this API must pass a valid OAuth token with the scope `blue`.  The OAuth token is a JWT signed and is verified using a HS256 shared key.  A JSON object array is returned consisting of only users that match the customer ID embedded in the JWT claim `user_name`, either length 0 or 1.
-
-- `GET /customer/{id}`
-  - Return customer by ID.  The caller of this API must pass a valid OAuth token with the scope `blue`.  The OAuth token is a JWT signed and is verified using a HS256 shared key.  If the `id` matches the customer ID passed in the `user_name` claim in the JWT, it is returned as a JSON object in the response; otherwise `HTTP 401` is returned.
-
-- `GET /customer/search`
-  - Return customer by username.  The caller of this API must pass a valid OAuth token with the scope `admin`.  This API is called by the [Auth Microservice](https://github.com/ibm-cloud-architecture/refarch-cloudnative-auth) when authenticating a user.  A JSON object array is returned consisting of only users that match the customer username (either length 0 or 1).
-
-- `DELETE /customer/{id}`
-  - Delete a customer record.  The caller of this API must pass a valid OAuth token with the scope `blue`.  If the `id` matches the customer ID passed in the `user_name` claim in the JWT, the customer object is deleted; otherwise `HTTP 401` is returned.  This API is currently not called as it is not a function of the BlueCompute application.
+## 
+docker run -p 3306:3306 --name some-mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:latest
 
 ## Pre-requisites:
 * Create a Kubernetes Cluster by following the steps [here](https://github.com/ibm-cloud-architecture/refarch-cloudnative-kubernetes#create-a-kubernetes-cluster).
@@ -185,7 +160,7 @@ CUSTOMER_ID=41757d0170344f9ea47a2d9634bc9ba7
 ```
 
 ### 2. Search the Customer
-To search users with a particular username, i.e. `foo`, run the command below:
+To search users with a particular username, i.e. `foo`, run the command below:__
 ```bash
 curl -s -X GET "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/search?username=${TEST_USER}" -H 'Content-type: application/json' -H "Authorization: Bearer ${jwt}"
 

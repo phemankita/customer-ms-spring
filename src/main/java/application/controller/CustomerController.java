@@ -11,13 +11,11 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
-import application.repository.CustomerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -30,16 +28,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import application.config.CloudantPropertiesBean;
 import application.model.Customer;
-
 import com.cloudant.client.api.ClientBuilder;
 import com.cloudant.client.api.CloudantClient;
 import com.cloudant.client.api.Database;
 import com.cloudant.client.api.model.Response;
 import com.cloudant.client.org.lightcouch.NoDocumentException;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 /**
  * REST Controller to manage Customer database
@@ -47,7 +46,7 @@ import io.swagger.annotations.Api;
  */
 @RestController
 @RequestMapping("/customer")
-@Api(value="Customer Management System", description="Operations pertaining to employee in Customer Management System")
+@Api(value="Customer Management System", description="Operations pertaining to customer in Customer Management System")
 public class CustomerController {
     private static Logger logger =  LoggerFactory.getLogger(CustomerController.class);
     private Database cloudant;
@@ -96,28 +95,14 @@ public class CustomerController {
     private Database getCloudantDatabase()  {
         return cloudant;
     }
-    
-    /**
-     * check
-     */
-    @RequestMapping("/check")
-    protected @ResponseBody ResponseEntity<String> check() {
-        // test the cloudant connection
-        System.out.println("checking...");
-    	try {
-			getCloudantDatabase().info();
-            return  ResponseEntity.ok("It works!");
-    	} catch (Exception e) {
-    		logger.error(e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-    	}
-    }
-    
+
+
     /**
      * @return customer by username
      */
     //@PreAuthorize("#oauth2.hasScope('admin')")
-    @RequestMapping(value = "/customer/search", method = RequestMethod.GET)
+    @ApiOperation(value = "Search a customer by username",response = Customer.class)
+    @RequestMapping(value = "/search", method = RequestMethod.GET)
     protected @ResponseBody ResponseEntity<?> searchCustomers(@RequestHeader Map<String, String> headers, @RequestParam(required=true) String username) {
         System.out.println("Searching for customer " + username);
         try {
@@ -161,7 +146,16 @@ public class CustomerController {
      * @return all customer
      * @throws Exception 
      */
-    @RequestMapping(value = "/customer", method = RequestMethod.GET)
+
+     @ApiOperation(value = "View a list of available customers",response = Iterable.class)
+     @ApiResponses(value = {
+             @ApiResponse(code = 200, message = "Successfully retrieved list"),
+             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+     }
+     )
+    @RequestMapping(value = "/list", method = RequestMethod.GET)
     protected ResponseEntity<?> getCustomers() throws Exception {
         try {
         	final String customerId = getCustomerId();
@@ -184,7 +178,8 @@ public class CustomerController {
     /**
      * @return customer by id
      */
-    @RequestMapping(value = "/customer/{id}", method = RequestMethod.GET)
+    @ApiOperation(value = "Search a customer by id",response = Customer.class)
+    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     protected ResponseEntity<?> getById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
         try {
         	final String customerId = getCustomerId();
@@ -212,7 +207,8 @@ public class CustomerController {
      * Add customer 
      * @return transaction status
      */
-    @RequestMapping(value = "/customer", method = RequestMethod.POST, consumes = "application/json")
+    @ApiOperation(value = "Add a customer")
+    @RequestMapping(value = "/add", method = RequestMethod.POST, consumes = "application/json")
     protected ResponseEntity<?> create(@RequestHeader Map<String, String> headers, @RequestBody Customer payload) {
         try {
         	// TODO: no one should have access to do this, it's not exposed to APIC
@@ -256,7 +252,8 @@ public class CustomerController {
      * Update customer 
      * @return transaction status
      */
-    @RequestMapping(value = "/customer/{id}", method = RequestMethod.PUT, consumes = "application/json")
+    @ApiOperation(value = "Update customer by id")
+    @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT, consumes = "application/json")
     protected ResponseEntity<?> update(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody Customer payload) {
 
         try {
@@ -299,7 +296,8 @@ public class CustomerController {
      * Delete customer 
      * @return transaction status
      */
-    @RequestMapping(value = "/customer/{id}", method = RequestMethod.DELETE)
+    @ApiOperation(value = "Delete a customer by id")
+    @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
     protected ResponseEntity<?> delete(@RequestHeader Map<String, String> headers, @PathVariable String id) {
 		// TODO: no one should have access to do this, it's not exposed to APIC
     	
@@ -319,20 +317,4 @@ public class CustomerController {
         return ResponseEntity.ok().build();
     }
 
-    @SuppressWarnings("unused")
-	private ResponseEntity<?> failGetCustomers(@RequestHeader Map<String, String> headers) {
-        // Simply return an empty array
-        final List<Customer> inventoryList = new ArrayList<Customer>();
-        return ResponseEntity.ok(inventoryList);
-    }
-
-    /**
-     * @return Circuit breaker tripped
-     */
-    @RequestMapping("/circuitbreaker")
-    @ResponseBody
-    public String tripCircuitBreaker() {
-        System.out.println("Circuitbreaker Service invoked");
-        return "";
-    }
 }
