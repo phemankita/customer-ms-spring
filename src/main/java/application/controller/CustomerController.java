@@ -11,6 +11,7 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
+import application.repository.CustomerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,14 +39,16 @@ import com.cloudant.client.api.CloudantClient;
 import com.cloudant.client.api.Database;
 import com.cloudant.client.api.model.Response;
 import com.cloudant.client.org.lightcouch.NoDocumentException;
+import io.swagger.annotations.Api;
 
 /**
  * REST Controller to manage Customer database
  *
  */
 @RestController
+@RequestMapping("/customer")
+@Api(value="Customer Management System", description="Operations pertaining to employee in Customer Management System")
 public class CustomerController {
-    
     private static Logger logger =  LoggerFactory.getLogger(CustomerController.class);
     private Database cloudant;
     
@@ -113,7 +116,7 @@ public class CustomerController {
     /**
      * @return customer by username
      */
-    @PreAuthorize("#oauth2.hasScope('admin')")
+    //@PreAuthorize("#oauth2.hasScope('admin')")
     @RequestMapping(value = "/customer/search", method = RequestMethod.GET)
     protected @ResponseBody ResponseEntity<?> searchCustomers(@RequestHeader Map<String, String> headers, @RequestParam(required=true) String username) {
         System.out.println("Searching for customer " + username);
@@ -158,7 +161,6 @@ public class CustomerController {
      * @return all customer
      * @throws Exception 
      */
-//    @HystrixCommand(fallbackMethod="failGetCustomers")
     @RequestMapping(value = "/customer", method = RequestMethod.GET)
     protected ResponseEntity<?> getCustomers() throws Exception {
         try {

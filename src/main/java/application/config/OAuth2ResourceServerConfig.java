@@ -37,7 +37,7 @@ public class OAuth2ResourceServerConfig extends ResourceServerConfigurerAdapter 
         http
             .requestMatchers().antMatchers("/customer", "/customer/search").and()
             .authorizeRequests()
-				.antMatchers(HttpMethod.POST, "/customer").access("#oauth2.hasScope('admin')")
+                .antMatchers(HttpMethod.POST, "/customer").access("#oauth2.hasScope('admin')")
 				.antMatchers(HttpMethod.GET, "/customer/search").access("#oauth2.hasScope('admin')")
             .and()
             .authorizeRequests()
@@ -47,7 +47,7 @@ public class OAuth2ResourceServerConfig extends ResourceServerConfigurerAdapter 
             .and()
             .exceptionHandling().accessDeniedHandler(new OAuth2AccessDeniedHandler());
     }
-    
+
     @Bean
     @Qualifier("tokenStore")
     protected TokenStore tokenStore() {

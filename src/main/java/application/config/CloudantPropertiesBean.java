@@ -52,6 +52,5 @@ public class CloudantPropertiesBean {
 	public void setDatabase(String database) {
 		this.database = database;
 	}
-	
 
 }

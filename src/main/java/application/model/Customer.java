@@ -1,6 +1,11 @@
 package application.model;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel(description = "All details about the Employee. ")
 public class Customer {
+	@ApiModelProperty(notes = "The database generated employee ID")
 	private String _id;
     
     @SuppressWarnings("unused")
@@ -8,10 +13,17 @@ public class Customer {
     
     private String username;
     private String password;
-    
+
+	@ApiModelProperty(notes = "The employee first name")
 	private String firstName;
+
+	@ApiModelProperty(notes = "The employee last name")
 	private String lastName;
+
+	@ApiModelProperty(notes = "The employee email id")
 	private String email;
+
+	@ApiModelProperty(notes = "The employee image url")
 	private String imageUrl;
 	
 	public String getCustomerId() {
