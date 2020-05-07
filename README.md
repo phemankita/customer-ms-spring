@@ -12,6 +12,8 @@ https://github.com/ibm-cloud-architecture/refarch-cloudnative-kubernetes/tree/sp
     + [Setup](#setup)
       - [1. Create a temporary HS256 shared secret](#1-create-a-temporary-hs256-shared-secret)
       - [2. Generate a JWT Token with `admin` Scope](#2-generate-a-jwt-token-with-admin-scope)
+      - [3. Generate a JWT Token with `admin` Scope](#3-generate-a-jwt-token-with-admin-scope)
+      c. 
     + [Create a Customer](#create-a-customer)
     + [Search the Customer](#search-the-customer)
     + [Get the Customer](#get-the-customer)

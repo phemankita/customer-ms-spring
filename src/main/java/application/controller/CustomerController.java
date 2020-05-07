@@ -38,7 +38,6 @@ import com.cloudant.client.api.CloudantClient;
 import com.cloudant.client.api.Database;
 import com.cloudant.client.api.model.Response;
 import com.cloudant.client.org.lightcouch.NoDocumentException;
-import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 
 /**
  * REST Controller to manage Customer database
@@ -328,7 +327,6 @@ public class CustomerController {
     /**
      * @return Circuit breaker tripped
      */
-    @HystrixCommand(fallbackMethod="failGood")
     @RequestMapping("/circuitbreaker")
     @ResponseBody
     public String tripCircuitBreaker() {
