@@ -2,12 +2,13 @@ package application.controller;
 
 import application.model.CloudantProperties;
 import application.model.Customer;
+import application.repository.CustomerRepository;
 import com.cloudant.client.api.ClientBuilder;
 import com.cloudant.client.api.CloudantClient;
 import com.cloudant.client.api.Database;
 import com.cloudant.client.api.model.Response;
-import com.cloudant.client.api.query.QueryResult;
 import com.cloudant.client.org.lightcouch.NoDocumentException;
+import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -17,9 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -36,15 +34,16 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/customer")
-@Api(value = "Customer Management System", description = "Operations pertaining to customer in Customer Management System")
+@Api(value = "Customer Management System")
 public class CustomerController {
+    final private CustomerRepository customerRepository = new CustomerRepository();
     final private static Logger logger = LoggerFactory.getLogger(CustomerController.class);
-
+    final private CloudantProperties cloudantProperties;
     private Database cloudant;
 
-    @Autowired
-    private CloudantProperties cloudantProperties = new CloudantProperties();
-
+    public CustomerController(CloudantProperties cloudantProperties) {
+        this.cloudantProperties = cloudantProperties;
+    }
 
     @PostConstruct
     private void init() throws MalformedURLException {
@@ -60,7 +59,9 @@ public class CustomerController {
             cloudant = cloudantClient.database(cloudantProperties.getDatabase(), true);
 
             // create the design document if it doesn't exist
-            if (!cloudant.contains("_design/username_searchIndex")) {
+            if (!cloudant.contains("_design/username_search" +
+                    "" +
+                    "Index")) {
                 final Map<String, Object> names = new HashMap<String, Object>();
                 names.put("index", "function(doc){index(\"usernames\", doc.username); }");
 
@@ -84,6 +85,65 @@ public class CustomerController {
         return cloudant;
     }
 
+    /**
+     * check
+     */
+    @RequestMapping("/check")
+    protected @ResponseBody
+    ResponseEntity<String> check() {
+        // test the cloudant connection
+        try {
+            getCloudant().info();
+            return ResponseEntity.ok("It works!");
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    /**
+     * Add customer
+     *
+     * @return transaction status
+     */
+    @ApiOperation(value = "Add a customer")
+    @RequestMapping(value = "/add", method = RequestMethod.POST, consumes = "application/json")
+    protected ResponseEntity<?> addCustomer(@RequestHeader Map<String, String> headers, @RequestBody Customer payload) {
+        System.out.println("adding customer " + payload + "headers " + headers);
+        try {
+            // TODO: no one should have access to do this, it's not exposed to APIC
+            final Database cloudant = getCloudant();
+            System.out.println("alpha ");
+
+            if (payload.get_id() != null && cloudant.contains(payload.get_id())) {
+                System.out.println("beta ");
+                return ResponseEntity.badRequest().body("Id " + payload.get_id() + " already exists");
+            }
+
+            String customer = customerRepository.getCustomerByUsername(getCloudant(), payload.getUsername());
+            System.out.println("payload " + payload.toString());
+            System.out.println("customer " + customer);
+            if (Strings.isNullOrEmpty(customer)) {
+                System.out.println("delta");
+                return ResponseEntity.badRequest().body("Customer with name " + payload.getUsername() + " already exists");
+            }
+
+            final Response resp = cloudant.save(payload);
+            System.out.println("response " + resp);
+            if (resp.getError() == null) {
+                // HTTP 201 CREATED
+                final URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(resp.getId()).toUri();
+                return ResponseEntity.created(location).build();
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp.getError());
+            }
+
+        } catch (Exception ex) {
+            logger.error("Error creating customer: " + ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating customer: " + ex.toString());
+        }
+
+    }
 
     /**
      * @return customer by username
@@ -91,74 +151,16 @@ public class CustomerController {
     @ApiOperation(value = "Search a customer by username", response = Customer.class)
     @RequestMapping(value = "/search", method = RequestMethod.GET)
     protected @ResponseBody
-    ResponseEntity<?> searchCustomers(@RequestHeader Map<String, String> headers, @RequestParam(required = true) String username) {
+    ResponseEntity<?> searchCustomerByUsername(@RequestHeader Map<String, String> headers, @RequestParam(required = true) String username) {
         System.out.println("Searching for customer " + username);
         try {
             if (username == null) {
                 return ResponseEntity.badRequest().body("Missing username");
             }
-            return ResponseEntity.ok(getCustomerByUsername(username));
+            return ResponseEntity.ok(customerRepository.getCustomerByUsername(getCloudant(), username));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-
-    }
-
-    public String getCustomerByUsername(String username) {
-        String query = "{ \"selector\": { \"username\": \"" + username + "\" } }";
-        System.out.println("username " + username + "  temp " + getCloudant());
-        final QueryResult<Customer> customers = getCloudant().query(query, Customer.class);
-        return customers.getDocs().toString();
-    }
-
-
-    private String getCustomerId() {
-        final SecurityContext ctx = SecurityContextHolder.getContext();
-        if (ctx.getAuthentication() == null) {
-            return null;
-        }
-
-        if (!ctx.getAuthentication().isAuthenticated()) {
-            return null;
-        }
-
-        final OAuth2Authentication oauth = (OAuth2Authentication) ctx.getAuthentication();
-
-        logger.debug("CustomerID: " + oauth.getName());
-
-        return oauth.getName();
-    }
-
-    /**
-     * @return all customer
-     * @throws Exception
-     */
-
-    @ApiOperation(value = "View a list of available customers", response = Iterable.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully retrieved list"),
-            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-    }
-    )
-    @RequestMapping(value = "/list", method = RequestMethod.GET)
-    protected ResponseEntity<?> getCustomers() throws Exception {
-        try {
-            final String customerId = getCustomerId();
-            if (customerId == null) {
-                // if no user passed in, this is a bad request
-                return ResponseEntity.badRequest().body("Invalid Bearer Token: Missing customer ID");
-            }
-
-            logger.debug("caller: " + customerId);
-            final Customer cust = getCloudant().find(Customer.class, customerId);
-
-            return ResponseEntity.ok(Arrays.asList(cust));
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            throw e;
         }
 
     }
@@ -168,9 +170,9 @@ public class CustomerController {
      */
     @ApiOperation(value = "Search a customer by id", response = Customer.class)
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    protected ResponseEntity<?> getById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+    protected ResponseEntity<?> searchCustomerById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
         try {
-            final String customerId = getCustomerId();
+            final String customerId = customerRepository.getCustomerId();
             if (customerId == null) {
                 // if no user passed in, this is a bad request
                 return ResponseEntity.badRequest().body("Invalid Bearer Token: Missing customer ID");
@@ -192,42 +194,59 @@ public class CustomerController {
     }
 
     /**
-     * Add customer
+     * Delete customer
      *
      * @return transaction status
      */
-    @ApiOperation(value = "Add a customer")
-    @RequestMapping(value = "/add", method = RequestMethod.POST, consumes = "application/json")
-    protected ResponseEntity<?> create(@RequestHeader Map<String, String> headers, @RequestBody Customer payload) {
+    @ApiOperation(value = "Delete a customer by id")
+    @RequestMapping(value = "/delete/{id}", method = RequestMethod.POST)
+    protected ResponseEntity<?> deleteCustomerById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+        System.out.println("deleting customer id " + id);
+        // TODO: no one should have access to do this, it's not exposed to APIC
         try {
-            // TODO: no one should have access to do this, it's not exposed to APIC
             final Database cloudant = getCloudant();
-
-            if (payload.get_id() != null && cloudant.contains(payload.get_id())) {
-                return ResponseEntity.badRequest().body("Id " + payload.get_id() + " already exists");
-            }
-
-            String customer = getCustomerByUsername(payload.getUsername());
-            if (!customer.isEmpty()) {
-                return ResponseEntity.badRequest().body("Customer with name " + payload.getUsername() + " already exists");
-            }
-
-            // TODO: hash password
-            //cust.setPassword(payload.getPassword());
-
-            final Response resp = cloudant.save(payload);
-
-            if (resp.getError() == null) {
-                // HTTP 201 CREATED
-                final URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(resp.getId()).toUri();
-                return ResponseEntity.created(location).build();
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp.getError());
-            }
-
+            final Customer cust = getCloudant().find(Customer.class, id);
+            cloudant.remove(cust);
+        } catch (NoDocumentException e) {
+            logger.error("Customer not found: " + id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer with ID " + id + " not found");
         } catch (Exception ex) {
-            logger.error("Error creating customer: " + ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating customer: " + ex.toString());
+            logger.error("Error deleting customer: " + ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting customer: " + ex.toString());
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * @return all customer
+     * @throws Exception
+     */
+
+    @ApiOperation(value = "View a list of available customers", response = Iterable.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully retrieved list"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    }
+    )
+    @RequestMapping(value = "/list", method = RequestMethod.GET)
+    protected ResponseEntity<?> getAllCustomers() throws Exception {
+        System.out.println("get all customers");
+        try {
+            final String customerId = customerRepository.getCustomerId();
+            if (customerId == null) {
+                // if no user passed in, this is a bad request
+                return ResponseEntity.badRequest().body("Invalid Bearer Token: Missing customer ID");
+            }
+
+            logger.debug("caller: " + customerId);
+            final Customer cust = getCloudant().find(Customer.class, customerId);
+
+            return ResponseEntity.ok(Arrays.asList(cust));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            throw e;
         }
 
     }
@@ -239,10 +258,10 @@ public class CustomerController {
      */
     @ApiOperation(value = "Update customer by id")
     @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT, consumes = "application/json")
-    protected ResponseEntity<?> update(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody Customer payload) {
+    protected ResponseEntity<?> updateCustomer(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody Customer payload) {
 
         try {
-            final String customerId = getCustomerId();
+            final String customerId = customerRepository.getCustomerId();
             if (customerId == null) {
                 // if no user passed in, this is a bad request
                 return ResponseEntity.badRequest().body("Invalid Bearer Token: Missing customer ID");
@@ -277,27 +296,4 @@ public class CustomerController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Delete customer
-     *
-     * @return transaction status
-     */
-    @ApiOperation(value = "Delete a customer by id")
-    @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
-    protected ResponseEntity<?> delete(@RequestHeader Map<String, String> headers, @PathVariable String id) {
-        System.out.println("deleting customer id " + id);
-        // TODO: no one should have access to do this, it's not exposed to APIC
-        try {
-            final Database cloudant = getCloudant();
-            final Customer cust = getCloudant().find(Customer.class, id);
-            cloudant.remove(cust);
-        } catch (NoDocumentException e) {
-            logger.error("Customer not found: " + id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer with ID " + id + " not found");
-        } catch (Exception ex) {
-            logger.error("Error deleting customer: " + ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting customer: " + ex.toString());
-        }
-        return ResponseEntity.ok().build();
-    }
 }

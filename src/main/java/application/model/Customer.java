@@ -38,5 +38,18 @@ public class Customer {
     @ApiModelProperty(notes = "The customer image url")
     private String imageUrl;
 
+    public Customer(String _id, String _rev, String username, String password, String firstName, String lastName, String email, String imageUrl) {
+        this._id = _id;
+        this._rev = _rev;
+        this.username = username;
+        this.password = password;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.imageUrl = imageUrl;
+    }
 
+    public Customer() {
+
+    }
 }
