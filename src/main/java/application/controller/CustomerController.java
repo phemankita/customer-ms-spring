@@ -15,19 +15,14 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import javax.annotation.PostConstruct;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -83,7 +78,7 @@ public class CustomerController {
         }
     }
 
-    public Database getCloudant() {
+    public Database database() {
         return cloudant;
     }
 
@@ -95,7 +90,7 @@ public class CustomerController {
     ResponseEntity<String> check() {
         // test the cloudant connection
         try {
-            getCloudant().info();
+            database().info();
             return ResponseEntity.ok("It works!");
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -114,7 +109,7 @@ public class CustomerController {
         System.out.println("adding customer " + payload + "headers " + headers);
         try {
             // TODO: no one should have access to do this, it's not exposed to APIC
-            final Database cloudant = getCloudant();
+            final Database cloudant = database();
             System.out.println("alpha ");
 
             if (payload.get_id() != null && cloudant.contains(payload.get_id())) {
@@ -122,7 +117,7 @@ public class CustomerController {
                 return ResponseEntity.badRequest().body("Id " + payload.get_id() + " already exists");
             }
 
-            String customer = customerRepository.getCustomerByUsername(getCloudant(), payload.getUsername());
+            String customer = customerRepository.getCustomerByUsername(database(), payload.getUsername());
             System.out.println("payload " + payload.toString());
             System.out.println("customer " + customer);
             if (Strings.isNullOrEmpty(customer)) {
@@ -160,7 +155,7 @@ public class CustomerController {
             if (username == null) {
                 return ResponseEntity.badRequest().body("Missing username");
             }
-            return ResponseEntity.ok(customerRepository.getCustomerByUsername(getCloudant(), username));
+            return ResponseEntity.ok(customerRepository.getCustomerByUsername(database(), username));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -180,7 +175,7 @@ public class CustomerController {
             if (id == null) {
                 return ResponseEntity.badRequest().body("Missing username");
             }
-            return ResponseEntity.ok(customerRepository.getCustomerById(getCloudant(), id));
+            return ResponseEntity.ok(customerRepository.getCustomerById(database(), id));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -198,8 +193,8 @@ public class CustomerController {
         System.out.println("deleting customer id " + id);
         // TODO: no one should have access to do this, it's not exposed to APIC
         try {
-            final Database cloudant = getCloudant();
-            final Customer cust = getCloudant().find(Customer.class, id);
+            final Database cloudant = database();
+            final Customer cust = database().find(Customer.class, id);
             cloudant.remove(cust);
         } catch (NoDocumentException e) {
             logger.error("Customer not found: " + id);
@@ -215,35 +210,6 @@ public class CustomerController {
      * @return all customers
      * @throws Exception
      */
-
-    @ApiOperation(value = "View a list of available customers", response = Iterable.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully retrieved list"),
-            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-    }
-    )
-    @RequestMapping(value = "/list", method = RequestMethod.GET)
-    protected ResponseEntity<?> getAllCustomers() throws Exception {
-        System.out.println("get all customers");
-        try {
-            final String customerId = customerRepository.getCustomerId();
-            if (customerId == null) {
-                // if no user passed in, this is a bad request
-                return ResponseEntity.badRequest().body("Invalid Bearer Token: Missing customer ID");
-            }
-
-            logger.debug("caller: " + customerId);
-            final Customer cust = getCloudant().find(Customer.class, customerId);
-
-            return ResponseEntity.ok(Arrays.asList(cust));
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            throw e;
-        }
-
-    }
 
     /**
      * Update customer
@@ -270,10 +236,10 @@ public class CustomerController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
-            final Database cloudant = getCloudant();
+            final Database cloudant = database();
 
             // Find the customer with the old values
-            Customer customer = getCloudant().find(Customer.class, id);
+            Customer customer = database().find(Customer.class, id);
 
             // _rev is set to null from the test case, get the _rev and set it to the payload
             payload.set_rev(customer.get_rev());
@@ -293,6 +259,19 @@ public class CustomerController {
         }
 
         return ResponseEntity.ok().build();
+    }
+
+    @ApiOperation(value = "View a list of available customers", response = Iterable.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully retrieved list"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    }
+    )
+    @RequestMapping(value ="/list", method = RequestMethod.GET)
+    protected ResponseEntity<?> getAllCustomers() {
+        return ResponseEntity.ok(customerRepository.getCustomers(database()));
     }
 
 }

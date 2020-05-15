@@ -19,6 +19,10 @@ import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
+/**
+ * The purpose of this class is to test the @see CustomerController class rest end points.
+ * @author Oscar I. Ricaud
+ */
 public class CustomerControllerTest {
     RestTemplate restTemplate = new RestTemplate();
     String baseUrl = "http://localhost:8080" + "/customer";
@@ -178,18 +182,9 @@ public class CustomerControllerTest {
     @Test
     public void getAllCustomers() throws URISyntaxException {
         URI uri = new URI(baseUrl + "/list");
-        RestTemplate restTemplate = new RestTemplate();
-
-        ResponseEntity<List<Customer>> response = restTemplate.exchange(baseUrl, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Customer>>() {
-                });
-
-        List<Customer> customers = response.getBody();
-
-        System.out.println("customers list " + customers.toString());
-
+        ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<String>() {});
+        System.out.println("customers list " + response);
         assertEquals(200, response.getStatusCodeValue());
-
     }
 
 }

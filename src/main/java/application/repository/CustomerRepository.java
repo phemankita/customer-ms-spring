@@ -6,13 +6,12 @@ import com.cloudant.client.api.Database;
 import com.cloudant.client.api.query.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 
 public class CustomerRepository {
@@ -37,18 +36,31 @@ public class CustomerRepository {
         return oauth.getName();
     }
 
-    public String getCustomerByUsername(Database cloudant, String username) {
+    public List<Customer> getCustomers(Database database) {
+        String query = "{" +
+                "   \"selector\": {" +
+                "      \"_id\": {" +
+                "         \"$gt\": null" +
+                "      }" +
+                "   }" +
+                "}";
+        final QueryResult<Customer> customers = database.query(query, Customer.class);
+        System.out.println("customers " + customers.getDocs());
+        return customers.getDocs();
+    }
+
+    public String getCustomerByUsername(Database database, String username) {
         String query = "{ \"selector\": { \"username\": \"" + username + "\" } }";
-        System.out.println("username " + username + "  temp " + cloudant);
-        final QueryResult<Customer> customers = cloudant.query(query, Customer.class);
+        System.out.println("username " + username + "  temp " + database);
+        final QueryResult<Customer> customers = database.query(query, Customer.class);
         System.out.println("customers.toString" + customers.getDocs().toString());
         return customers.getDocs().toString();
     }
 
-    public String getCustomerById(Database cloudant, String id) {
+    public String getCustomerById(Database database, String id) {
         String query = "{ \"selector\": { \"_id\": \"" + id + "\" } }";
-        System.out.println("id " + id + "  temp " + cloudant);
-        final QueryResult<Customer> customers = cloudant.query(query, Customer.class);
+        System.out.println("id " + id + "  temp " + database);
+        final QueryResult<Customer> customers = database.query(query, Customer.class);
         System.out.println("customers.toString" + customers.getDocs().toString());
         return customers.getDocs().toString();
     }
