@@ -143,75 +143,6 @@ public class CustomerController {
     }
 
     /**
-     * @return customer by username
-     */
-    @ApiOperation(value = "Search a customer by username", response = Customer.class)
-    @RequestMapping(value = "/search", method = RequestMethod.POST)
-    protected @ResponseBody
-    ResponseEntity<?> searchCustomerByUsername(@RequestHeader Map<String, String> headers, @RequestBody String username) {
-        System.out.println("Searching by username " + username);
-
-        try {
-            if (username == null) {
-                return ResponseEntity.badRequest().body("Missing username");
-            }
-            return ResponseEntity.ok(customerRepository.getCustomerByUsername(database(), username));
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    /**
-     * @return customer by username
-     */
-    @ApiOperation(value = "Search a customer by id", response = Customer.class)
-    @RequestMapping(value = "/search/{id}", method = RequestMethod.POST)
-    protected @ResponseBody
-    ResponseEntity<?> searchCustomerById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
-        System.out.println("Searching by id " + id);
-
-        try {
-            if (id == null) {
-                return ResponseEntity.badRequest().body("Missing username");
-            }
-            return ResponseEntity.ok(customerRepository.getCustomerById(database(), id));
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    /**
-     * Delete customer
-     *
-     * @return transaction status
-     */
-    @ApiOperation(value = "Delete a customer by id")
-    @RequestMapping(value = "/delete/{id}", method = RequestMethod.POST)
-    protected ResponseEntity<?> deleteCustomerById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
-        System.out.println("deleting customer id " + id);
-        // TODO: no one should have access to do this, it's not exposed to APIC
-        try {
-            final Database cloudant = database();
-            final Customer cust = database().find(Customer.class, id);
-            cloudant.remove(cust);
-        } catch (NoDocumentException e) {
-            logger.error("Customer not found: " + id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer with ID " + id + " not found");
-        } catch (Exception ex) {
-            logger.error("Error deleting customer: " + ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting customer: " + ex.toString());
-        }
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * @return all customers
-     * @throws Exception
-     */
-
-    /**
      * Update customer
      *
      * @return transaction status
@@ -220,6 +151,7 @@ public class CustomerController {
     @RequestMapping(value = "/update/{id}", method = RequestMethod.POST, consumes = "application/json")
     protected ResponseEntity<?> updateCustomerById(@RequestHeader Map<String, String> isAuthenticated, @PathVariable String id, @RequestBody Customer payload) {
         System.out.println("updating customer by id " + id);
+        System.out.println("isAuthenticated " + isAuthenticated);
         try {
             //final String customerId = customerRepository.getCustomerId();
             if (isAuthenticated == null) {
@@ -260,6 +192,75 @@ public class CustomerController {
 
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * @return customer by username
+     */
+    @ApiOperation(value = "Search a customer by username", response = Customer.class)
+    @RequestMapping(value = "/search", method = RequestMethod.POST)
+    protected @ResponseBody
+    ResponseEntity<?> searchCustomerByUsername(@RequestBody String username) {
+        System.out.println("Searching by username " + username);
+
+        try {
+            if (username == null) {
+                return ResponseEntity.badRequest().body("Missing username");
+            }
+            return ResponseEntity.ok(customerRepository.getCustomerByUsername(database(), username));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * @return customer by username
+     */
+    @ApiOperation(value = "Search a customer by id", response = Customer.class)
+    @RequestMapping(value = "/search/{id}", method = RequestMethod.POST)
+    protected @ResponseBody
+    ResponseEntity<?> searchCustomerById(@PathVariable String id) {
+        System.out.println("Searching by id " + id);
+
+        try {
+            if (id == null) {
+                return ResponseEntity.badRequest().body("Missing username");
+            }
+            return ResponseEntity.ok(customerRepository.getCustomerById(database(), id));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Delete customer
+     *
+     * @return transaction status
+     */
+    @ApiOperation(value = "Delete a customer by id")
+    @RequestMapping(value = "/delete/{id}", method = RequestMethod.POST)
+    protected ResponseEntity<?> deleteCustomerById(@PathVariable String id) {
+        System.out.println("deleting customer id " + id);
+        // TODO: no one should have access to do this, it's not exposed to APIC
+        try {
+            final Database cloudant = database();
+            final Customer cust = database().find(Customer.class, id);
+            cloudant.remove(cust);
+        } catch (NoDocumentException e) {
+            logger.error("Customer not found: " + id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer with ID " + id + " not found");
+        } catch (Exception ex) {
+            logger.error("Error deleting customer: " + ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting customer: " + ex.toString());
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * @return all customers
+     * @throws Exception
+     */
 
     @ApiOperation(value = "View a list of available customers", response = Iterable.class)
     @ApiResponses(value = {

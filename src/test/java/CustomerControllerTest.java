@@ -1,6 +1,8 @@
 import application.model.Customer;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -22,12 +24,13 @@ import static org.junit.Assert.assertEquals;
  * The purpose of this class is to test the @see CustomerController class rest end points.
  * @author Oscar I. Ricaud
  */
+@FixMethodOrder(MethodSorters.JVM)
 public class CustomerControllerTest {
     RestTemplate restTemplate = new RestTemplate();
     String baseUrl = "http://localhost:8080" + "/customer";
     HttpHeaders headers = new HttpHeaders();
-    Customer newCustomer = new Customer("123", null, "kimmy",
-            "passw0rd", "perla", "hernandez", "helloworld@gmail.com",
+    Customer newCustomer = new Customer("911", null, "yooyo",
+            "passw0rd", "josh", "hernandez", "helloworld@gmail.com",
             "test.png");
 
     SecurityContext ctx = SecurityContextHolder.createEmptyContext();
@@ -185,5 +188,4 @@ public class CustomerControllerTest {
         System.out.println("customers list " + response);
         assertEquals(200, response.getStatusCodeValue());
     }
-
 }
