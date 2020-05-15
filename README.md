@@ -105,7 +105,6 @@ You can run the application with appsody such as
 `appsody run`
 `appsody test`
 
-
 #### d. Generate a JWT Token with `admin` Scope
 
 Where:
@@ -137,7 +136,7 @@ Where:
 * `${TEST_USER}` is the user to create, i.e. `foo`.
 
 ```bash
-curl -X POST -i "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer" -H "Content-Type: application/json" -H "Authorization: Bearer ${jwt}" -d "{\"username\": \"${TEST_USER}\", \"password\": \"bar\", \"firstName\": \"foo\", \"lastName\": \"bar\", \"email\": \"foo@bar.com\"}"
+curl -X POST -i "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/add" -H "Content-Type: application/json" -H "Authorization: Bearer ${jwt}" -d "{\"username\": \"${TEST_USER}\", \"password\": \"bar\", \"firstName\": \"foo\", \"lastName\": \"bar\", \"email\": \"foo@bar.com\"}"
 
 HTTP/1.1 201 Created
 Date: Mon, 20 Aug 2018 21:43:51 GMT
@@ -215,7 +214,7 @@ Where:
 * `${jwt_blue}` is the JWT token created in the previous step.
 
 ```bash
-curl -X DELETE -i "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/${CUSTOMER_ID}" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt_blue}"
+curl -X DELETE -i "http://${CUSTOMER_HOST}:${CUSTOMER_PORT}/customer/delete/${CUSTOMER_ID}" -H "Content-type: application/json" -H "Authorization: Bearer ${jwt_blue}"
 
 HTTP/1.1 200 OK
 Date: Mon, 20 Aug 2018 22:20:00 GMT
@@ -231,6 +230,8 @@ The easiest way to get CouchDB running is via a Docker container. To do so, run 
 ```bash
 # Start a CouchDB Container with a database user, a password, and create a new database
 docker run --name customercouchdb -p 5985:5984 -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=passw0rd -d couchdb:2.1.2
+
+Then visit http://127.0.0.1:5985/_utils/#login
 
 # Get the CouchDB Container's IP Address
 docker inspect customercouchdb | grep "IPAddress"
@@ -288,3 +289,4 @@ To see the Customer app working in a more complex microservices use case, checko
 ## Contributing
 If you would like to contribute to this repository, please fork it, submit a PR, and assign as reviewers any of the GitHub users listed here:
 git clone https://github.com/ibm-garage-ref-storefront/customer-ms-spring
+
