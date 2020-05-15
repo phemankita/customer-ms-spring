@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * REST Controller to manage Customer database
+ * Class is responsible for handling rest end points
  */
 @RestController
 @RequestMapping("/customer")

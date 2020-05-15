@@ -1,7 +1,6 @@
 import application.model.Customer;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
