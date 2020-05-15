@@ -123,12 +123,14 @@ public class CustomerControllerTest {
      */
     @Test
     public void searchCustomerByUsername() throws URISyntaxException {
-        URI uri = new URI(baseUrl + "/search");
+        URI uri = new URI(baseUrl + "/search-by-username/" + newCustomer.getUsername());
+
         System.out.println("newCustomer.getUsername()" + newCustomer.getUsername());
 
         HttpEntity<String> request = new HttpEntity<String>(newCustomer.getUsername(), headers);
         try {
-            ResponseEntity<String> response = restTemplate.postForEntity(uri, request, String.class);
+
+            ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
             int responseCode = response.getStatusCodeValue();
             assertEquals(200, responseCode);
         } catch (HttpClientErrorException e) { // Catch error when adding duplicate customer

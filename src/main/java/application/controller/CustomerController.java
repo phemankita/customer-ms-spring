@@ -1,6 +1,6 @@
 package application.controller;
 
-import application.model.CloudantProperties;
+import application.config.CloudantProperties;
 import application.model.Customer;
 import application.repository.CustomerRepository;
 import com.cloudant.client.api.Database;
@@ -59,27 +59,20 @@ public class CustomerController {
     @ApiOperation(value = "Add a customer")
     @RequestMapping(value = "/add", method = RequestMethod.POST, consumes = "application/json")
     protected ResponseEntity<?> addCustomer(@RequestHeader Map<String, String> headers, @RequestBody Customer payload) {
-        System.out.println("adding customer " + payload + "headers " + headers);
         try {
             // TODO: no one should have access to do this, it's not exposed to APIC
             final Database cloudant = cloudantProperties.getCloudantDatabase();
-            System.out.println("alpha ");
 
             if (payload.get_id() != null && cloudant.contains(payload.get_id())) {
-                System.out.println("beta ");
                 return ResponseEntity.badRequest().body("Id " + payload.get_id() + " already exists");
             }
 
             String customer = customerRepository.getCustomerByUsername(cloudantProperties.getCloudantDatabase(), payload.getUsername());
-            System.out.println("payload " + payload.toString());
-            System.out.println("customer " + customer);
             if (Strings.isNullOrEmpty(customer)) {
-                System.out.println("delta");
                 return ResponseEntity.badRequest().body("Customer with name " + payload.getUsername() + " already exists");
             }
 
             final Response resp = cloudant.save(payload);
-            System.out.println("response " + resp);
             if (resp.getError() == null) {
                 // HTTP 201 CREATED
                 final URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(resp.getId()).toUri();
@@ -102,9 +95,8 @@ public class CustomerController {
      */
     @ApiOperation(value = "Update customer by id")
     @RequestMapping(value = "/update/{id}", method = RequestMethod.POST, consumes = "application/json")
-    protected ResponseEntity<?> updateCustomerById(@RequestHeader Map<String, String> isAuthenticated, @PathVariable String id, @RequestBody Customer payload) {
-        System.out.println("updating customer by id " + id);
-        System.out.println("isAuthenticated " + isAuthenticated);
+    protected ResponseEntity<?>
+    updateCustomerById(@RequestHeader Map<String, String> isAuthenticated, @PathVariable String id, @RequestBody Customer payload) {
         try {
             //final String customerId = customerRepository.getCustomerId();
             if (isAuthenticated == null) {
@@ -150,11 +142,8 @@ public class CustomerController {
      * @return customer by username
      */
     @ApiOperation(value = "Search a customer by username", response = Customer.class)
-    @RequestMapping(value = "/search", method = RequestMethod.POST)
-    protected @ResponseBody
-    ResponseEntity<?> searchCustomerByUsername(@RequestHeader Map<String, String> headers, @RequestBody String username) {
-        System.out.println("Searching by username " + username);
-
+    @RequestMapping(path = "/search-by-username/{username}", method = RequestMethod.GET)
+    protected ResponseEntity<?> searchCustomerByUsername(@RequestHeader Map<String, String> headers, @PathVariable("username") String username) {
         try {
             if (username == null) {
                 return ResponseEntity.badRequest().body("Missing username");
@@ -171,10 +160,7 @@ public class CustomerController {
      */
     @ApiOperation(value = "Search a customer by id", response = Customer.class)
     @RequestMapping(value = "/search/{id}", method = RequestMethod.POST)
-    protected @ResponseBody
-    ResponseEntity<?> searchCustomerById(@PathVariable String id) {
-        System.out.println("Searching by id " + id);
-
+    protected @ResponseBody ResponseEntity<?> searchCustomerById(@PathVariable("id") String id) {
         try {
             if (id == null) {
                 return ResponseEntity.badRequest().body("Missing username");
@@ -194,7 +180,6 @@ public class CustomerController {
     @ApiOperation(value = "Delete a customer by id")
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.POST)
     protected ResponseEntity<?> deleteCustomerById(@PathVariable String id) {
-        System.out.println("deleting customer id " + id);
         // TODO: no one should have access to do this, it's not exposed to APIC
         try {
             final Database cloudant = cloudantProperties.getCloudantDatabase();

@@ -1,4 +1,4 @@
-package application.model;
+package application.config;
 
 import application.controller.CustomerController;
 import com.cloudant.client.api.ClientBuilder;
