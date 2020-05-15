@@ -1,4 +1,5 @@
 import application.model.Customer;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
@@ -6,22 +7,34 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
 public class CustomerControllerTest {
-    @LocalServerPort
-    int serverPort = 8080;
-    String api_endpoint = "/customer/";
-
-    Customer newCustomer = new Customer("123", null, "oiricaud23",
+    RestTemplate restTemplate = new RestTemplate();
+    String baseUrl = "http://localhost:8080" + "/customer";
+    HttpHeaders headers = new HttpHeaders();
+    Customer newCustomer = new Customer("123", null, "kimmy",
             "passw0rd", "perla", "hernandez", "helloworld@gmail.com",
             "test.png");
+
+    SecurityContext ctx = SecurityContextHolder.createEmptyContext();
+
+    @Before
+    public void constructor() {
+        // Define security context
+        SecurityContextHolder.setContext(ctx);
+        ctx.setAuthentication(new UsernamePasswordAuthenticationToken("anonymous", "", Arrays.asList(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))));
+    }
 
     /**
      * Method is responsible for checking the /check rest end point
@@ -30,12 +43,7 @@ public class CustomerControllerTest {
      */
     @Test
     public void check() throws URISyntaxException {
-        RestTemplate restTemplate = new RestTemplate();
-        final String baseUrl = "http://localhost:" + serverPort + api_endpoint + "check";
-        URI uri = new URI(baseUrl);
-
-        HttpHeaders headers = new HttpHeaders();
-
+        URI uri = new URI(baseUrl + "/check");
         HttpEntity request = new HttpEntity(headers);
 
         try {
@@ -57,16 +65,12 @@ public class CustomerControllerTest {
      */
     @Test
     public void addCustomer() throws URISyntaxException {
-        RestTemplate restTemplate = new RestTemplate();
-        String baseUrl = "http://localhost:" + serverPort + api_endpoint + "add";
-        URI uri = new URI(baseUrl);
-        HttpHeaders headers = new HttpHeaders();
+        URI uri = new URI(baseUrl + "/add");
         HttpEntity<Customer> request = new HttpEntity(newCustomer, headers);
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(uri, request, String.class);
             int responseCode = response.getStatusCodeValue();
-            String responseBody = response.getBody();
             System.out.println("response " + response);
             assertEquals(201, responseCode);
         } catch (HttpClientErrorException e) { // Catch error when adding duplicate employee
@@ -81,20 +85,29 @@ public class CustomerControllerTest {
      * @throws URISyntaxException
      */
     @Test
-    public void updateCustomerById() {
-        final String baseUrl = "http://localhost:" + serverPort + api_endpoint + "list";
-        RestTemplate restTemplate = new RestTemplate();
+    public void updateCustomerById() throws URISyntaxException {
+        // Define headers and base url
+        URI uri = new URI(baseUrl + "/update/" + newCustomer.get_id());
 
-        ResponseEntity<List<Customer>> response = restTemplate.exchange(baseUrl, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Customer>>() {
-                });
+        // Change the customer name
+        newCustomer.setUsername("kimmy");
 
-        List<Customer> customers = response.getBody();
+        // Prepare the headers to store the security context
+        List<String> temp = new LinkedList<>();
+        temp.add(String.valueOf(ctx.getAuthentication().isAuthenticated()));
+        headers.put("securitycontext", temp);
 
-        System.out.println("customers list " + customers.toString());
+        HttpEntity request = new HttpEntity(newCustomer, headers);
 
-        assertEquals(200, response.getStatusCodeValue());
-
+        try {
+            ResponseEntity<Customer> response = restTemplate.postForEntity(uri, request, Customer.class);
+            int responseCode = response.getStatusCodeValue();
+            Customer responseBody = response.getBody();
+            System.out.println("response " + response);
+            assertEquals(200, responseCode);
+        } catch (HttpClientErrorException e) { // Catch error when adding duplicate customer
+            assertEquals(406, e.getRawStatusCode()); // Catch error when adding duplicate employee
+        }
     }
 
     /**
@@ -104,25 +117,17 @@ public class CustomerControllerTest {
      */
     @Test
     public void searchCustomerByUsername() throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + serverPort + api_endpoint + "get";
+        URI uri = new URI(baseUrl + "/search");
+        System.out.println("newCustomer.getUsername()" + newCustomer.getUsername());
 
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders httpHeaders = new HttpHeaders();
-
-        URI uri = new URI(baseUrl);
-
-
-        Customer customer = new Customer();
-
-        int employeeId = 1; // Joffrey Lannister id
-        HttpEntity<Integer> request = new HttpEntity<>(employeeId, httpHeaders);
-        ResponseEntity<Customer> responseWhenFound = restTemplate.postForEntity(uri, request, Customer.class);
-
-        customer = responseWhenFound.getBody();
-
-        System.out.println("employee " + customer.toString());
-        assertEquals(200, responseWhenFound.getStatusCodeValue());
-
+        HttpEntity<String> request = new HttpEntity<String>(newCustomer.getUsername(), headers);
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(uri, request, String.class);
+            int responseCode = response.getStatusCodeValue();
+            assertEquals(200, responseCode);
+        } catch (HttpClientErrorException e) { // Catch error when adding duplicate customer
+            assertEquals(406, e.getRawStatusCode()); // Catch error when adding duplicate employee
+        }
     }
 
     /**
@@ -132,25 +137,16 @@ public class CustomerControllerTest {
      */
     @Test
     public void searchCustomerById() throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + serverPort + api_endpoint + "get";
-
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders httpHeaders = new HttpHeaders();
-
-        URI uri = new URI(baseUrl);
-
-
-        Customer customer = new Customer();
-
-        int employeeId = 1; // Joffrey Lannister id
-        HttpEntity<Integer> request = new HttpEntity<>(employeeId, httpHeaders);
-        ResponseEntity<Customer> responseWhenFound = restTemplate.postForEntity(uri, request, Customer.class);
-
-        customer = responseWhenFound.getBody();
-
-        System.out.println("employee " + customer.toString());
-        assertEquals(200, responseWhenFound.getStatusCodeValue());
-
+        System.out.println("newCustomer.getId()" + newCustomer.get_id());
+        URI uri = new URI(baseUrl + "/search/" + newCustomer.get_id());
+        HttpEntity<String> request = new HttpEntity<String>(newCustomer.get_id(), headers);
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(uri, request, String.class);
+            int responseCode = response.getStatusCodeValue();
+            assertEquals(200, responseCode);
+        } catch (HttpClientErrorException e) { // Catch error when adding duplicate customer
+            assertEquals(406, e.getRawStatusCode()); // Catch error when adding duplicate employee
+        }
     }
 
     /**
@@ -160,10 +156,7 @@ public class CustomerControllerTest {
      */
     @Test
     public void deleteCustomerById() throws URISyntaxException {
-        RestTemplate restTemplate = new RestTemplate();
-        String baseUrl = "http://localhost:" + serverPort + api_endpoint + "delete/" + newCustomer.get_id();
-        URI uri = new URI(baseUrl);
-        HttpHeaders headers = new HttpHeaders();
+        URI uri = new URI(baseUrl + "/delete/" + newCustomer.get_id());
         HttpEntity<String> request = new HttpEntity(newCustomer.get_id(), headers);
 
         try {
@@ -183,8 +176,8 @@ public class CustomerControllerTest {
      * @throws URISyntaxException
      */
     @Test
-    public void getAllCustomers() {
-        final String baseUrl = "http://localhost:" + serverPort + api_endpoint + "list";
+    public void getAllCustomers() throws URISyntaxException {
+        URI uri = new URI(baseUrl + "/list");
         RestTemplate restTemplate = new RestTemplate();
 
         ResponseEntity<List<Customer>> response = restTemplate.exchange(baseUrl, HttpMethod.GET, null,

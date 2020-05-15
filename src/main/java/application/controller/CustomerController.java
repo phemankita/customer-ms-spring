@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -149,10 +151,11 @@ public class CustomerController {
      * @return customer by username
      */
     @ApiOperation(value = "Search a customer by username", response = Customer.class)
-    @RequestMapping(value = "/search", method = RequestMethod.GET)
+    @RequestMapping(value = "/search", method = RequestMethod.POST)
     protected @ResponseBody
-    ResponseEntity<?> searchCustomerByUsername(@RequestHeader Map<String, String> headers, @RequestParam(required = true) String username) {
-        System.out.println("Searching for customer " + username);
+    ResponseEntity<?> searchCustomerByUsername(@RequestHeader Map<String, String> headers, @RequestBody String username) {
+        System.out.println("Searching by username " + username);
+
         try {
             if (username == null) {
                 return ResponseEntity.badRequest().body("Missing username");
@@ -162,34 +165,25 @@ public class CustomerController {
             logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
     }
 
     /**
-     * @return customer by id
+     * @return customer by username
      */
     @ApiOperation(value = "Search a customer by id", response = Customer.class)
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    protected ResponseEntity<?> searchCustomerById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+    @RequestMapping(value = "/search/{id}", method = RequestMethod.POST)
+    protected @ResponseBody
+    ResponseEntity<?> searchCustomerById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+        System.out.println("Searching by id " + id);
+
         try {
-            final String customerId = customerRepository.getCustomerId();
-            if (customerId == null) {
-                // if no user passed in, this is a bad request
-                return ResponseEntity.badRequest().body("Invalid Bearer Token: Missing customer ID");
+            if (id == null) {
+                return ResponseEntity.badRequest().body("Missing username");
             }
-
-            logger.debug("caller: " + customerId);
-
-            if (!customerId.equals(id)) {
-                // if i'm getting a customer ID that doesn't match my own ID, then return 401
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            final Customer cust = getCloudant().find(Customer.class, customerId);
-
-            return ResponseEntity.ok(cust);
-        } catch (NoDocumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer with ID " + id + " not found");
+            return ResponseEntity.ok(customerRepository.getCustomerById(getCloudant(), id));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -218,7 +212,7 @@ public class CustomerController {
     }
 
     /**
-     * @return all customer
+     * @return all customers
      * @throws Exception
      */
 
@@ -257,34 +251,39 @@ public class CustomerController {
      * @return transaction status
      */
     @ApiOperation(value = "Update customer by id")
-    @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT, consumes = "application/json")
-    protected ResponseEntity<?> updateCustomer(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody Customer payload) {
-
+    @RequestMapping(value = "/update/{id}", method = RequestMethod.POST, consumes = "application/json")
+    protected ResponseEntity<?> updateCustomerById(@RequestHeader Map<String, String> isAuthenticated, @PathVariable String id, @RequestBody Customer payload) {
+        System.out.println("updating customer by id " + id);
         try {
-            final String customerId = customerRepository.getCustomerId();
-            if (customerId == null) {
+            //final String customerId = customerRepository.getCustomerId();
+            if (isAuthenticated == null) {
                 // if no user passed in, this is a bad request
                 return ResponseEntity.badRequest().body("Invalid Bearer Token: Missing customer ID");
             }
+            if (isAuthenticated.get("securitycontext").equals("false")) {
+                return ResponseEntity.badRequest().body("User does not have enough access to make such query");
+            }
 
-            logger.info("caller: " + customerId);
-            if (!customerId.equals("id")) {
+            logger.info("caller: " + payload.get_id());
+            if (!payload.get_id().equals(id)) {
                 // if i'm getting a customer ID that doesn't match my own ID, then return 401
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
             final Database cloudant = getCloudant();
-            final Customer cust = getCloudant().find(Customer.class, id);
 
-            cust.setFirstName(payload.getFirstName());
-            cust.setLastName(payload.getLastName());
-            cust.setImageUrl(payload.getImageUrl());
-            cust.setEmail(payload.getEmail());
+            // Find the customer with the old values
+            Customer customer = getCloudant().find(Customer.class, id);
 
-            // TODO: hash password
-            cust.setPassword(payload.getPassword());
+            // _rev is set to null from the test case, get the _rev and set it to the payload
+            payload.set_rev(customer.get_rev());
 
-            cloudant.save(payload);
+            // set the payload to be the customer
+            customer = payload;
+
+            // update the database
+            cloudant.update(customer);
+
         } catch (NoDocumentException e) {
             logger.error("Customer not found: " + id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer with ID " + id + " not found");
