@@ -3,8 +3,6 @@ package application.controller;
 import application.model.CloudantProperties;
 import application.model.Customer;
 import application.repository.CustomerRepository;
-import com.cloudant.client.api.ClientBuilder;
-import com.cloudant.client.api.CloudantClient;
 import com.cloudant.client.api.Database;
 import com.cloudant.client.api.model.Response;
 import com.cloudant.client.org.lightcouch.NoDocumentException;
@@ -19,11 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import javax.annotation.PostConstruct;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -36,50 +30,9 @@ public class CustomerController {
     final private CustomerRepository customerRepository = new CustomerRepository();
     final private static Logger logger = LoggerFactory.getLogger(CustomerController.class);
     final private CloudantProperties cloudantProperties;
-    private Database cloudant;
 
     public CustomerController(CloudantProperties cloudantProperties) {
         this.cloudantProperties = cloudantProperties;
-    }
-
-    @PostConstruct
-    private void init() throws MalformedURLException {
-        logger.debug(cloudantProperties.toString());
-
-        try {
-            logger.info("Connecting to cloudant at: " + cloudantProperties.getProtocol() + "://" + cloudantProperties.getHost() + ":" + cloudantProperties.getPort());
-            final CloudantClient cloudantClient = ClientBuilder.url(new URL(cloudantProperties.getProtocol() + "://" + cloudantProperties.getHost() + ":" + cloudantProperties.getPort()))
-                    .username(cloudantProperties.getUsername())
-                    .password(cloudantProperties.getPassword())
-                    .build();
-
-            cloudant = cloudantClient.database(cloudantProperties.getDatabase(), true);
-
-            // create the design document if it doesn't exist
-            if (!cloudant.contains("_design/username_search" +
-                    "" +
-                    "Index")) {
-                final Map<String, Object> names = new HashMap<String, Object>();
-                names.put("index", "function(doc){index(\"usernames\", doc.username); }");
-
-                final Map<String, Object> indexes = new HashMap<String, Object>();
-                indexes.put("usernames", names);
-
-                final Map<String, Object> view_ddoc = new HashMap<String, Object>();
-                view_ddoc.put("_id", "_design/username_searchIndex");
-                view_ddoc.put("indexes", indexes);
-
-                cloudant.save(view_ddoc);
-            }
-
-        } catch (MalformedURLException e) {
-            logger.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    public Database database() {
-        return cloudant;
     }
 
     /**
@@ -90,7 +43,7 @@ public class CustomerController {
     ResponseEntity<String> check() {
         // test the cloudant connection
         try {
-            database().info();
+            cloudantProperties.getCloudantDatabase().info();
             return ResponseEntity.ok("It works!");
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -109,7 +62,7 @@ public class CustomerController {
         System.out.println("adding customer " + payload + "headers " + headers);
         try {
             // TODO: no one should have access to do this, it's not exposed to APIC
-            final Database cloudant = database();
+            final Database cloudant = cloudantProperties.getCloudantDatabase();
             System.out.println("alpha ");
 
             if (payload.get_id() != null && cloudant.contains(payload.get_id())) {
@@ -117,7 +70,7 @@ public class CustomerController {
                 return ResponseEntity.badRequest().body("Id " + payload.get_id() + " already exists");
             }
 
-            String customer = customerRepository.getCustomerByUsername(database(), payload.getUsername());
+            String customer = customerRepository.getCustomerByUsername(cloudantProperties.getCloudantDatabase(), payload.getUsername());
             System.out.println("payload " + payload.toString());
             System.out.println("customer " + customer);
             if (Strings.isNullOrEmpty(customer)) {
@@ -168,10 +121,10 @@ public class CustomerController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
-            final Database cloudant = database();
+            final Database cloudant = cloudantProperties.getCloudantDatabase();
 
             // Find the customer with the old values
-            Customer customer = database().find(Customer.class, id);
+            Customer customer = cloudantProperties.getCloudantDatabase().find(Customer.class, id);
 
             // _rev is set to null from the test case, get the _rev and set it to the payload
             payload.set_rev(customer.get_rev());
@@ -199,14 +152,14 @@ public class CustomerController {
     @ApiOperation(value = "Search a customer by username", response = Customer.class)
     @RequestMapping(value = "/search", method = RequestMethod.POST)
     protected @ResponseBody
-    ResponseEntity<?> searchCustomerByUsername(@RequestBody String username) {
+    ResponseEntity<?> searchCustomerByUsername(@RequestHeader Map<String, String> headers, @RequestBody String username) {
         System.out.println("Searching by username " + username);
 
         try {
             if (username == null) {
                 return ResponseEntity.badRequest().body("Missing username");
             }
-            return ResponseEntity.ok(customerRepository.getCustomerByUsername(database(), username));
+            return ResponseEntity.ok(customerRepository.getCustomerByUsername(cloudantProperties.getCloudantDatabase(), username));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -226,7 +179,7 @@ public class CustomerController {
             if (id == null) {
                 return ResponseEntity.badRequest().body("Missing username");
             }
-            return ResponseEntity.ok(customerRepository.getCustomerById(database(), id));
+            return ResponseEntity.ok(customerRepository.getCustomerById(cloudantProperties.getCloudantDatabase(), id));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -244,8 +197,8 @@ public class CustomerController {
         System.out.println("deleting customer id " + id);
         // TODO: no one should have access to do this, it's not exposed to APIC
         try {
-            final Database cloudant = database();
-            final Customer cust = database().find(Customer.class, id);
+            final Database cloudant = cloudantProperties.getCloudantDatabase();
+            final Customer cust = cloudantProperties.getCloudantDatabase().find(Customer.class, id);
             cloudant.remove(cust);
         } catch (NoDocumentException e) {
             logger.error("Customer not found: " + id);
@@ -272,7 +225,7 @@ public class CustomerController {
     )
     @RequestMapping(value ="/list", method = RequestMethod.GET)
     protected ResponseEntity<?> getAllCustomers() {
-        return ResponseEntity.ok(customerRepository.getCustomers(database()));
+        return ResponseEntity.ok(customerRepository.getCustomers(cloudantProperties.getCloudantDatabase()));
     }
 
 }

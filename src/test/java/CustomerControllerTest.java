@@ -29,7 +29,7 @@ public class CustomerControllerTest {
     RestTemplate restTemplate = new RestTemplate();
     String baseUrl = "http://localhost:8080" + "/customer";
     HttpHeaders headers = new HttpHeaders();
-    Customer newCustomer = new Customer("911", null, "yooyo",
+    Customer newCustomer = new Customer("7775", null, "yooyo",
             "passw0rd", "josh", "hernandez", "helloworld@gmail.com",
             "test.png");
 
