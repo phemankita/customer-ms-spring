@@ -1,0 +1,114 @@
+apiVersion: appsody.dev/v1beta1
+kind: AppsodyApplication
+metadata:
+  annotations:
+    architecture: x86_64
+    authoritative-source-url: registry.access.redhat.com
+    build-date: 2020-03-31T14:54:13.907559
+    commit.image.appsody.dev/author: phemankita <phemankita@gmail.com>
+    commit.image.appsody.dev/committer: GitHub <noreply@github.com>
+    commit.image.appsody.dev/date: Mon May 18 11:36:11 2020 +0530
+    commit.image.appsody.dev/message: 'Merge pull request #6 from oiricaud/issue-5'
+    commit.stack.appsody.dev/contextDir: /incubator/java-spring-boot2
+    commit.stack.appsody.dev/date: Thu May 14 09:37:35 2020 +0100
+    commit.stack.appsody.dev/message: 'Merge pull request #340 from groeges/release-0.9-codewind'
+    description: This image is the Kabanero development container for the java-spring-boot2
+      stack
+    distribution-scope: public
+    image.opencontainers.org/created: "2020-05-21T14:22:04+05:30"
+    image.opencontainers.org/documentation: https://github.com/phemankita/customer-ms-spring
+    image.opencontainers.org/revision: dbf80d266ebe115d183ea10dc3763ec68a603d0c-modified
+    image.opencontainers.org/source: https://github.com/phemankita/customer-ms-spring/tree/master
+    image.opencontainers.org/url: https://github.com/phemankita/customer-ms-spring
+    k8s.io/description: The Universal Base Image is designed and engineered to be
+      the base layer for all of your containerized applications, middleware and utilities.
+      This base image is freely redistributable, but Red Hat only supports Red Hat
+      technologies through subscriptions for Red Hat products. This image is maintained
+      by Red Hat and updated regularly.
+    k8s.io/display-name: Red Hat Universal Base Image 8
+    maintainer: Red Hat, Inc.
+    name: kabanero/java-spring-boot2
+    openshift.io/expose-services: ""
+    openshift.io/tags: base rhel8
+    redhat.com/build-host: cpt-1007.osbs.prod.upshift.rdu2.redhat.com
+    redhat.com/component: ubi8-container
+    redhat.com/license_terms: https://www.redhat.com/en/about/red-hat-end-user-license-agreements#UBI
+    release: "408"
+    stack.appsody.dev/authors: Erin Schnabel <ebullient>, Ozzy Osborne <bardweller>,
+      Richard Trotter <richard-trotter>, Harish Yayi <yharish991>
+    stack.appsody.dev/configured: docker.io/kabanero/java-spring-boot2:0.3
+    stack.appsody.dev/created: "2020-05-19T06:48:21Z"
+    stack.appsody.dev/description: Spring Boot using OpenJ9 and Maven
+    stack.appsody.dev/documentation: https://github.com/kabanero-io/collections/tree/master/incubator/java-spring-boot2/README.md
+    stack.appsody.dev/licenses: Apache-2.0
+    stack.appsody.dev/revision: 104bb146d0d770e30886b845d7fca9311d54ed20
+    stack.appsody.dev/source: https://github.com/kabanero-io/collections/tree/master/incubator/java-spring-boot2/image
+    stack.appsody.dev/tag: docker.io/kabanero/java-spring-boot2:0.3.29
+    stack.appsody.dev/title: Spring Boot®
+    stack.appsody.dev/url: https://github.com/kabanero-io/collections/tree/master/incubator/java-spring-boot2
+    summary: Image for Kabanero java-spring-boot2 development
+    url: https://access.redhat.com/containers/#/registry.access.redhat.com/ubi8/images/8.1-408
+    vcs-ref: 26f36bfa3e3a04c8c866b250924c1aefc34f01c9
+    vcs-type: git
+    vendor: Kabanero
+    version: 0.3.23
+  creationTimestamp: null
+  labels:
+    image.opencontainers.org/title: customer-api
+    stack.appsody.dev/id: java-spring-boot2
+    stack.appsody.dev/version: 0.3.29
+  name: customer-ms-spring
+  namespace: storefront
+spec:
+  applicationImage: docker.io/ibmcase/customer-ms-spring
+  createKnativeService: false
+  expose: true
+  livenessProbe:
+    failureThreshold: 12
+    httpGet:
+      path: /micro/actuator/liveness
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 2
+  monitoring:
+    endpoints:
+    - path: /micro/actuator/prometheus
+    labels:
+      k8s-app: customer-api
+  readinessProbe:
+    failureThreshold: 12
+    httpGet:
+      path: /micro/actuator/health
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 2
+    timeoutSeconds: 1
+  env:
+  - name: COUCHDB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        key: adminPassword
+        name: customer-couchdb-couchdb
+  - name: COUCHDB_USERNAME
+    valueFrom:
+      secretKeyRef:
+        key: adminUsername
+        name: customer-couchdb-couchdb
+  - name: COUCHDB_PROTOCOL
+    value: http
+  - name: COUCHDB_HOST
+    value: customer-couchdb-svc-couchdb
+  - name: COUCHDB_PORT
+    value: 5985
+  - name: COUCHDB_DATABASE
+    value: customers
+  - name: COUCHDB_HS256_KEY
+    value: E6526VJkKYhyTFRFMC0pTECpHcZ7TGcq8pKsVVgz9KtESVpheEO284qKzfzg8HpWNBPeHOxNGlyudUHi6i8tFQJXC8PiI48RUpMh23vPDLGD35pCM0417gf58z5xlmRNii56fwRCmIhhV7hDsm3KO2jRv4EBVz7HrYbzFeqI45CaStkMYNipzSm2duuer7zRdMjEKIdqsby0JfpQpykHmC5L6hxkX0BT7XWqztTr6xHCwqst26O0g8r7bXSYjp4a
+  service:
+    annotations:
+      prometheus.io/path: /micro/actuator/prometheus
+      prometheus.io/scrape: "true"
+    port: 8080
+    type: NodePort
+  stack: java-spring-boot2
+  version: 1.0.0
