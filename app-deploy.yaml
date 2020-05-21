@@ -68,8 +68,8 @@ spec:
     httpGet:
       path: /micro/actuator/liveness
       port: 8080
-    initialDelaySeconds: 5
-    periodSeconds: 2
+    initialDelaySeconds: 20
+    periodSeconds: 10
   monitoring:
     endpoints:
     - path: /micro/actuator/prometheus
@@ -80,9 +80,9 @@ spec:
     httpGet:
       path: /micro/actuator/health
       port: 8080
-    initialDelaySeconds: 5
-    periodSeconds: 2
-    timeoutSeconds: 1
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 15
   env:
   - name: COUCHDB_PASSWORD
     valueFrom:
