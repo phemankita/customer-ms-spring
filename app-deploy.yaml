@@ -74,7 +74,7 @@ spec:
     endpoints:
     - path: /micro/actuator/prometheus
     labels:
-      k8s-app: customer-api
+      k8s-app: customer-ms-spring
   readinessProbe:
     failureThreshold: 12
     httpGet:
@@ -87,13 +87,13 @@ spec:
   - name: COUCHDB_PASSWORD
     valueFrom:
       secretKeyRef:
-        key: adminPassword
         name: customer-couchdb-couchdb
+        key: adminPassword
   - name: COUCHDB_USERNAME
     valueFrom:
       secretKeyRef:
-        key: adminUsername
         name: customer-couchdb-couchdb
+        key: adminUsername
   - name: COUCHDB_PROTOCOL
     value: http
   - name: COUCHDB_HOST
