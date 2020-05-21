@@ -15,9 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -211,6 +213,32 @@ public class CustomerController {
     @RequestMapping(value ="/list", method = RequestMethod.GET)
     protected ResponseEntity<?> getAllCustomers() {
         return ResponseEntity.ok(customerRepository.getCustomers(cloudantProperties.getCloudantDatabase()));
+    }
+    
+    /**
+     * @return customer by username
+     */
+    @PreAuthorize("#oauth2.hasScope('admin')")
+    @RequestMapping(value = "/customer/search", method = RequestMethod.GET)
+    protected @ResponseBody ResponseEntity<?> searchCustomers(@RequestHeader Map<String, String> headers, @RequestParam(required=true) String username) {
+        try {
+        	
+        	if (username == null) {
+        		return ResponseEntity.badRequest().body("Missing username");
+        	}
+        	
+        	final List<Customer> customers = getCloudantDatabase().findByIndex(
+        			"{ \"selector\": { \"username\": \"" + username + "\" } }", 
+        			Customer.class);
+        	
+        	//  query index
+            return  ResponseEntity.ok(customers);
+            
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        
     }
 
 }
